@@ -2,22 +2,14 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faBuilding, faTachometerAlt, faUser, faUsers, faTicketAlt, faCreditCard, faBalanceScale } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faCat, faTachometerAlt, faCalendar, faBriefcase, faCreditCard } from '@fortawesome/free-solid-svg-icons';
 
 class Navigation extends Component{
-    constructor(props, context){
-        super(props, context);
-
-        this.state = {
-
-        }
-    }
-
     render(){
         return(
             <div className="nav-side-menu">
                 <div className="brand">
-                    <FontAwesomeIcon icon={faBuilding} fixedWidth /> Te administro &nbsp; &nbsp; &nbsp;
+                    <FontAwesomeIcon icon={faCat} fixedWidth /> Mafi Mochilas &nbsp; &nbsp; &nbsp;
                 </div>
 
                 <FontAwesomeIcon className='toggle-btn' icon={faBars} fixedWidth data-toggle="collapse" data-target="#menu-content" />
@@ -33,49 +25,25 @@ class Navigation extends Component{
                         </li>
 
                         <li>
-                            <Link to="/Profile">
+                            <Link to="/OrderManagement">
                                 <div className="button-wrapper">
-                                    <FontAwesomeIcon icon={faUser} fixedWidth /> Mi Perfil
+                                    <FontAwesomeIcon icon={faCalendar} fixedWidth /> Gestión de pedidos
                                 </div>
                             </Link>
                         </li>
 
                         <li>
-                            <Link to="/Neighbors">
+                            <Link to="/InventoryManagement">
                                 <div className="button-wrapper">
-                                    <FontAwesomeIcon icon={faUsers} fixedWidth /> Datos vecinos
+                                    <FontAwesomeIcon icon={faBriefcase} fixedWidth /> Gestión de inventario
                                 </div>
                             </Link>
                         </li>
 
                         <li>
-                            <Link to="/SendTicket">
+                            <Link to="/PurchasesManagement">
                                 <div className="button-wrapper">
-                                    <FontAwesomeIcon icon={faTicketAlt} fixedWidth /> Enviar ticket
-                                </div>
-                            </Link>
-                        </li>
-
-                        <li>
-                            <Link to="/ViewTickets">
-                                <div className="button-wrapper">
-                                    <FontAwesomeIcon icon={faTicketAlt} fixedWidth /> Ver tickets
-                                </div>
-                            </Link>
-                        </li>
-
-                        <li>
-                            <Link to="/UploadCommonExpenses">
-                                <div className="button-wrapper">
-                                    <FontAwesomeIcon icon={faCreditCard} fixedWidth /> Subir gastos comunes
-                                </div>
-                            </Link>
-                        </li>
-
-                        <li>
-                            <Link to="/CommonExpensesBalance">
-                                <div className="button-wrapper">
-                                    <FontAwesomeIcon icon={faBalanceScale} fixedWidth /> Balance gastos comunes
+                                    <FontAwesomeIcon icon={faCreditCard} fixedWidth /> Gestión de compras
                                 </div>
                             </Link>
                         </li>

@@ -2,9 +2,8 @@ import React, { Component } from 'react';
 import { Grid, Row, Col, Tab, Tabs, Modal } from 'react-bootstrap';
 
 import '../../node_modules/bootstrap/dist/css/bootstrap.min.css';
-import '../css/purchasesManagement.css';
 
-class PurchasesManagement extends Component {
+class InventoryManagement extends Component {
     constructor(props, context) {
         super(props, context);
 
@@ -16,15 +15,6 @@ class PurchasesManagement extends Component {
         this.state = {
             submitted: false,
             show: false,
-            purchases: [],
-            purchase: {
-                id: '',
-                date: '',
-                item_id: 0,
-                item_qty: 0,
-                description: '',
-                unit_price: 0
-            },
             items: [],
             item: {
                 id: '',
@@ -33,7 +23,7 @@ class PurchasesManagement extends Component {
                 times_sold: 0,
                 type: '',
                 color: '',
-                price: 0
+                sell_price: 0
             }
         };
     }
@@ -41,16 +31,17 @@ class PurchasesManagement extends Component {
     handleSubmit = (event) => {
         event.preventDefault();
 
-        var date = event.target[0].value;
-        var item_id = event.target[1].value;
-        var item_qty = event.target[2].value;
-        var description = event.target[3].value;
+        var description = event.target[0].value;
+        var type = event.target[1].value;
+        var color = event.target[2].value;
+        var purchase_price = event.target[3].value;
+        var sell_price = event.target[4].value;
 
-        if ( date == '' || item_id == '' || item_qty == '' || description == '') {
+        if ( description == '' || type == '' || color == '' || purchase_price == '' || sell_price == '') {
             this.state.submitted = false;
             this.handleShow();
         }else{
-            fetch(this.URL+`/purchases/add?date=${date}&item_id=${item_id}&item_qty=${item_qty}&description=${description}`)
+            fetch(this.URL+`/items/add?description=${description}&type=${type}&color=${color}&purchase_price=${purchase_price}&sell_price=${sell_price}`)
                 .then(this.getOrders)
                 .catch(err => console.error(err))
 
@@ -67,17 +58,8 @@ class PurchasesManagement extends Component {
         this.setState({ show: true });
     }
 
-    // Database stuff
     componentDidMount(){
-        this.getPurchases();
         this.getItems();
-    }
-
-    getPurchases = _ => {
-        fetch(this.URL+`/purchases`)
-        .then(response => response.json())
-        .then(resp => this.setState({ purchases: resp.data }))
-        .catch(err => console.error(err))
     }
 
     getItems = _ => {
@@ -91,46 +73,44 @@ class PurchasesManagement extends Component {
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
 
-    // renderPurchases = ({id, date, item_id, item_qty, description, total_price} ) => <option key={id} value={id}> { description } </option>
-    renderItem = ({id, description, times_bought, times_sold, type, color, sell_price} ) => <option key={id} value={id}> { description } </option>
-    renderPurchases = ({id, date, description, item_qty, unit_price } ) => <tr key={id}><td>{ id }</td><td>{ date }</td><td>{ description }</td><td>{ item_qty }</td><td>{ "$"+this.numberWithDots(unit_price*item_qty) }</td></tr>
+    renderItem = ({id, description, times_bought, times_sold, type, color, sell_price} ) => <tr key={id}><td>{id}</td><td>{description}</td><td>{times_bought}</td><td>{times_sold}</td><td>{times_bought-times_sold}</td><td><img src={ this.URL+"/img?image=" + type } alt={type}/></td><td>{color}</td><td>{"$"+this.numberWithDots(sell_price)}</td></tr>
 
     render() {
-        const { purchases, purchase } = this.state;
         const { items, item } = this.state;
 
         return (
-            !(purchases.length || items.length) ? (
+            !(items.length) ? (
                 <span>Loading...</span>
             ) : (
                 <div>
                     <div className="page-title">
-                        <h1>Gestión de compras</h1>
+                        <h1>Gestión de inventario</h1>
                         <hr />
                     </div>
 
                     <Tabs defaultActiveKey={1} id="uncontrolled-tab" animation={false}>
-                        <Tab eventKey={1} title="Ver compras realizadas">
+                        <Tab eventKey={1} title="Ver productos">
                             <div className="tab-container">
                                 <div className="long-block">
-                                    <div className="block-title">Compras realizadas</div>
+                                    <div className="block-title">Catálogo</div>
 
                                     <div className="block-body">
                                         <table className="table table-sm table-hover">
                                             <thead>
                                                 <tr>
                                                     <th scope="col">ID</th>
-                                                    <th scope="col">Fecha</th>
-                                                    <th scope="col">Producto comprado</th>
-                                                    <th scope="col">Cantidad comprada</th>
-                                                    <th scope="col">Precio total</th>
+                                                    <th scope="col">Descripción</th>
+                                                    <th scope="col">Veces comprado</th>
+                                                    <th scope="col">Veces vendido</th>
+                                                    <th scope="col">Stock</th>
+                                                    <th scope="col">Tipo</th>
+                                                    <th scope="col">Color</th>
+                                                    <th scope="col">Precio</th>
                                                 </tr>
                                             </thead>
 
                                             <tbody>
-                                                {
-                                                    purchases.map(this.renderPurchases)
-                                                }
+                                                { items.map(this.renderItem) }
                                             </tbody>
                                         </table>
                                     </div>
@@ -138,33 +118,35 @@ class PurchasesManagement extends Component {
                             </div>
                         </Tab>
 
-                        <Tab eventKey={2} title="Agregar compras">
+                        <Tab eventKey={2} title="Agregar productos">
                             <div className="tab-container">
                                 <form onSubmit={this.handleSubmit}>
+                                    <div className="form-group">
+                                        <label htmlFor="description">Descripción del producto</label>
+                                        <input placeholder="Mochila Kanken roja" id="description" name="description" type="text" className="form-control" />
+                                    </div>
+
                                     <div className="form-row">
                                         <div className="form-group col-md-6">
-                                            <label htmlFor="date">Fecha de la compra</label>
-                                            <input placeholder="25/01/1998" id="date" name="date" type="text" className="form-control" />
+                                            <label htmlFor="number">Estilo del producto</label>
+                                            <input placeholder="KANKEN" id="type" name="type" type="text" className="form-control" />
                                         </div>
 
                                         <div className="form-group col-md-6">
-                                            <label htmlFor="item_id">Selecciona el artículo que se compró</label>
-
-                                            <select id="item_id" name="item_id" className="form-control">
-                                                { items.map(this.renderItem) }
-                                            </select>
+                                            <label htmlFor="color">Color del producto (Usar color neutro: ROJO, ROSADO, AMARILLO)</label>
+                                            <input placeholder="ROSADO" id="color" name="color" type="text" className="form-control" />
                                         </div>
                                     </div>
 
                                     <div className="form-row">
                                         <div className="form-group col-md-6">
-                                            <label htmlFor="item_qty">Ingresa la cantidad que se compró</label>
-                                            <input placeholder="4" id="item_qty" name="item_qty" type="text" className="form-control" />
+                                            <label htmlFor="purchase_price">Indica el precio de compra</label>
+                                            <input placeholder="5500" id="purchase_price" name="purchase_price" className="form-control" />
                                         </div>
 
                                         <div className="form-group col-md-6">
-                                            <label htmlFor="description">Descripción de la compra</label>
-                                            <input placeholder="Compra de tres pañaleras" id="description" name="description" type="text" className="form-control" />
+                                            <label htmlFor="sell_price">Indica el precio de venta</label>
+                                            <input placeholder="11000" id="sell_price" name="sell_price" className="form-control" />
                                         </div>
                                     </div>
 
@@ -176,15 +158,15 @@ class PurchasesManagement extends Component {
 
                     <Modal show={this.state.show} onHide={this.handleClose} animation={true}>
                         <Modal.Header>
-                            <Modal.Title>Acerca de la compra</Modal.Title>
+                            <Modal.Title>Acerca del producto</Modal.Title>
                         </Modal.Header>
 
                         <Modal.Body>
                                 {
                                     (!this.state.submitted)?
-                                        <p>Faltan datos por ingresar.</p>
-                                        :
-                                        <p>¡Enviado!</p>
+                                    <p>Faltan datos por ingresar.</p>
+                                    :
+                                    <p>¡Enviado!</p>
                                 }
                         </Modal.Body>
 
@@ -200,4 +182,4 @@ class PurchasesManagement extends Component {
     }
 }
 
-export default PurchasesManagement;
+export default InventoryManagement;

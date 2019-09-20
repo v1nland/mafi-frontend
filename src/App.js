@@ -1,32 +1,27 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
+import { HashRouter, Route } from 'react-router-dom';
 
-import './App.css';
-
-import Navigation from './components/Navigation';
-import Dashboard from './components/Dashboard';
-import DatabaseManagement from './components/DatabaseManagement';
-import OrderManagement from './components/OrderManagement';
-import PurchasesManagement from './components/PurchasesManagement';
-import InventoryManagement from './components/InventoryManagement';
+import Navigation from './components/Navigation/Navigation';
+import Dashboard from './pages/Dashboard';
+import OrderManagement from './pages/OrderManagement';
+import PurchasesManagement from './pages/PurchasesManagement';
+import InventoryManagement from './pages/InventoryManagement';
 
 class App extends Component {
     render() {
         return (
-            <Router>
+            <HashRouter>
                 <div className="App">
                     < Navigation />
 
                     <div className="page-wrapper">
                         <Route exact path="/" component={Dashboard} />
-                        <Route path="/Dashboard" component={Dashboard} />
-                        <Route path="/DatabaseManagement" component={DatabaseManagement} />
-                        <Route path="/OrderManagement" component={OrderManagement} />
-                        <Route path="/PurchasesManagement" component={PurchasesManagement} />
-                        <Route path="/InventoryManagement" component={InventoryManagement} />
+                        <Route exact path="/OrderManagement" component={OrderManagement} />
+                        <Route exact path="/PurchasesManagement" component={PurchasesManagement} />
+                        <Route exact path="/InventoryManagement" component={InventoryManagement} />
                     </div>
                 </div>
-            </Router>
+            </HashRouter>
         );
     }
 }

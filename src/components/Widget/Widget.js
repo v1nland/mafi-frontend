@@ -10,7 +10,7 @@ class StatWidget extends Component{
         style: PropTypes.string,
         count: PropTypes.string,
         headerText: PropTypes.string,
-        icon: PropTypes.string,
+        icon: PropTypes.object,
         footerText: PropTypes.string,
     }
 
@@ -20,7 +20,7 @@ class StatWidget extends Component{
                 <Card.Header>
                     <Row>
                         <Col xs={3}>
-                            <i className={this.props.icon} />
+                            {this.props.icon}
                         </Col>
 
                         <Col xs={9}>
