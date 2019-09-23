@@ -14,20 +14,20 @@ class OrderManagement extends Component {
 
         this.URL = "https://mafi-backend.herokuapp.com";
 
-        this.handleShow = this.handleShow.bind(this);
-        this.handleClose = this.handleClose.bind(this);
+        this.OpenOrderFormModal = this.OpenOrderFormModal.bind(this);
+        this.CloseOrderFormModal = this.CloseOrderFormModal.bind(this);
 
-        this.handleShowSwap = this.handleShowSwap.bind(this);
-        this.handleCloseSwap = this.handleCloseSwap.bind(this);
+        this.OpenSwapStateModal = this.OpenSwapStateModal.bind(this);
+        this.CloseSwapStateModal = this.CloseSwapStateModal.bind(this);
 
-        this.handleSwap = this.handleSwap.bind(this);
+        this.SwapOrderState = this.SwapOrderState.bind(this);
 
         this.state = {
             FetchDone: false,
-            curID: -1,
-            submitted: false,
-            show: false,
-            showSwapState: false,
+            IDtoChange: 0,
+            NewOrderSubmitted: false,
+            ShowOrderFormModal: false,
+            ShowSwapStateModal: false,
             items: [],
             item: {
                 id: '',
@@ -55,7 +55,7 @@ class OrderManagement extends Component {
     }
 
     // Modal stuff
-    handleSubmit = (event) => {
+    SubmitNewOrder = (event) => {
         event.preventDefault();
 
         var buyer = event.target[0].value;
@@ -69,57 +69,56 @@ class OrderManagement extends Component {
         var location = event.target[8].value;
 
         if ( buyer == '' || description == '' || contact == '' || date == '' || item_id == '' || source == '' || hour == '' || discount == '' ||location == '') {
-            this.state.submitted = false;
-            this.handleShow();
+            this.setState({ NewOrderSubmitted: false });
+            this.OpenOrderFormModal();
         }else{
             fetch(this.URL+`/orders/add?buyer=${buyer}&description=${description}&contact=${contact}&date=${date}&item_id=${item_id}&source=${source}&hour=${hour}&discount=${discount}&location=${location}&finished=0`)
-            .then(this.getOrders)
+            .then(this.GetOrders)
             .catch(err => console.error(err))
 
-            this.state.submitted = true;
-            this.handleShow();
+            this.setState({ NewOrderSubmitted: true });
+            this.OpenOrderFormModal();
         }
     }
 
-    handleClose() {
-        this.setState({ show: false });
+    CloseOrderFormModal() {
+        this.setState({ ShowOrderFormModal: false });
     }
 
-    handleShow() {
-        this.setState({ show: true });
+    OpenOrderFormModal() {
+        this.setState({ ShowOrderFormModal: true });
     }
 
-    handleCloseSwap() {
-        this.setState({ showSwapState: false });
+    CloseSwapStateModal() {
+        this.setState({ ShowSwapStateModal: false });
     }
 
-    handleShowSwap( id ) {
-        this.setState({ showSwapState: true });
-        this.setState({ curID: id });
+    OpenSwapStateModal( id ) {
+        this.setState({ ShowSwapStateModal: true });
+        this.setState({ IDtoChange: id });
     }
 
-    handleSwap(){
-        fetch(this.URL+`/orders/update?order_id=` + this.state.curID)
-        .then(this.getOrders)
+    SwapOrderState(){
+        fetch(this.URL+`/orders/update?order_id=` + this.state.IDtoChange)
+        .then(this.GetOrders)
         .catch(err => console.error(err))
 
-        this.setState({ showSwapState: false });
+        this.setState({ ShowSwapStateModal: false });
     }
 
-    // Database stuff
     componentDidMount(){
-        this.getItems();
-        this.getOrders();
+        this.GetItems();
+        this.GetOrders();
     }
 
-    getItems = _ => {
+    GetItems = _ => {
         fetch(this.URL+`/items`)
         .then(response => response.json())
         .then(resp => this.setState({ items: resp.data }))
         .catch(err => console.error(err))
     }
 
-    getOrders = _ => {
+    GetOrders = _ => {
         fetch(this.URL+`/orders`)
         .then(response => response.json())
         .then(resp => this.setState({ orders: resp.data, FetchDone: true }))
@@ -129,9 +128,9 @@ class OrderManagement extends Component {
     NumberWithDots = (x) => { return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
     FormatDiscount = (x, d) => { return "$"+this.NumberWithDots(Math.round(x*(1-d/100))); }
 
-    renderItem = ({id, description, times_bought, times_sold, type, color, price} ) => <option key={id} value={id}> { description } </option>
-    renderOrder = ({id, buyer, date, description, contact, total_price, source, location, hour, discount, finished}) => (
-        <tr key={id}> <td>{buyer.toUpperCase()}</td> <td>{description}</td> <td>{date}</td> <td>{"+569 "+contact}</td> <td>{this.FormatDiscount(total_price, discount)}</td> <td> <img src={this.URL+"/img?image="+source} /> </td> <td>{location}</td> <td>{hour}</td> <td onClick={() => this.handleShowSwap(id)}> <img src={ this.URL+"/img?image=" + finished } /></td></tr>
+    RenderItems = ( {id, description} ) => <option key={id} value={id}> { description } </option>
+    RenderOrders = ({id, buyer, description, date, contact, total_price, source, location, hour, discount, finished}) => (
+        <tr key={id}> <td>{buyer.toUpperCase()}</td> <td>{description}</td> <td>{date}</td> <td>{"+569 "+contact}</td> <td>{this.FormatDiscount(total_price, discount)}</td> <td> <img src={this.URL+"/img?image="+source} /> </td> <td>{location}</td> <td>{hour}</td> <td onClick={() => this.OpenSwapStateModal(id)}> <img src={ this.URL+"/img?image=" + finished } /></td></tr>
     )
 
     render() {
@@ -146,7 +145,7 @@ class OrderManagement extends Component {
                     <PageTitle text="Gestión de pedidos" />
 
                     <Tabs defaultActiveKey={1} id="uncontrolled-tab" animation={false}>
-                        <Tab eventKey={1} title="Ver todos los pedidos">
+                        <Tab eventKey={1} title="Ver pedidos">
                             <Table responsive size="sm">
                                 <thead>
                                     <tr>
@@ -163,13 +162,13 @@ class OrderManagement extends Component {
                                 </thead>
 
                                 <tbody>
-                                    { orders.map(this.renderOrder) }
+                                    { orders.map(this.RenderOrders) }
                                 </tbody>
                             </Table>
                         </Tab>
 
                         <Tab eventKey={2} title="Agendar nuevo pedido">
-                            <Form onSubmit={this.handleSubmit}>
+                            <Form onSubmit={this.SubmitNewOrder}>
                                 <Form.Row>
                                     <Form.Group as={Col}>
                                         <Form.Label>Nombre del comprador (o Instagram)</Form.Label>
@@ -199,7 +198,7 @@ class OrderManagement extends Component {
                                         <Form.Label>Selecciona el pedido</Form.Label>
 
                                         <Form.Control as="select" id="item_id" name="item_id">
-                                            { items.map(this.renderItem) }
+                                            { items.map(this.RenderItems) }
                                         </Form.Control>
                                     </Form.Group>
 
@@ -237,30 +236,24 @@ class OrderManagement extends Component {
                         </Tab>
                     </Tabs>
 
-
-
-
-
-                    <Modal show={this.state.show} onHide={this.handleClose} animation={true}>
+                    <Modal show={this.state.ShowOrderFormModal} onHide={this.state.CloseOrderFormModal} animation={true}>
                         <Modal.Header>
                             <Modal.Title>Acerca del pedido</Modal.Title>
                         </Modal.Header>
 
                         <Modal.Body>
-                                {
-                                    (!this.state.submitted)?
-                                        <p>Faltan datos por ingresar.</p>
-                                        :
-                                        <p>¡Enviado!</p>
-                                }
+                                {(!this.state.NewOrderSubmitted)?
+                                    <p>Faltan datos por ingresar.</p>
+                                    :
+                                    <p>¡Enviado!</p>}
                         </Modal.Body>
 
                         <Modal.Footer>
-                            <button className="btn btn-primary" onClick={this.handleClose}>Cerrar</button>
+                            <Button onClick={this.CloseOrderFormModal}>Cerrar</Button>
                         </Modal.Footer>
                     </Modal>
 
-                    <Modal show={this.state.showSwapState} onHide={this.handleCloseSwap} animation={true}>
+                    <Modal show={this.state.ShowSwapStateModal} onHide={this.CloseSwapStateModal} animation={true}>
                         <Modal.Header>
                             <Modal.Title>Cambio de estado del pedido</Modal.Title>
                         </Modal.Header>
@@ -270,12 +263,10 @@ class OrderManagement extends Component {
                         </Modal.Body>
 
                         <Modal.Footer>
-                            <button className="btn btn-primary" onClick={this.handleSwap}>Cambiar</button>
-                            <button className="btn btn-light" onClick={this.handleCloseSwap}>Cerrar</button>
+                            <Button onClick={this.SwapOrderState}>Cambiar</Button>
+                            <Button onClick={this.CloseSwapStateModal}>Cancelar</Button>
                         </Modal.Footer>
                     </Modal>
-
-                    <br />
                 </div>
             )
         );

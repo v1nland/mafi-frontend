@@ -6,7 +6,7 @@ import Donut from '../components/Donut/Donut';
 import TimelineElement from '../components/Utility/TimelineElement';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendar, faLaptop, faMobileAlt, faArchive } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faLaptop, faMobileAlt, faArchive, faCheck } from '@fortawesome/free-solid-svg-icons';
 
 import CenteredSpinner from '../components/Utility/CenteredSpinner';
 import PageTitle from '../components/Utility/PageTitle';
@@ -137,7 +137,7 @@ class Dashboard extends Component {
                                     <TimelineElement
                                         inverted=""
                                         color="timeline-badge success"
-                                        icon="fa fa-check"
+                                        icon=<FontAwesomeIcon icon={faCheck} />
                                         title={this.state.mostSoldItem.description}
                                         source={"Vendido "+this.state.mostSoldItem.timesSold +" veces"}
                                         body={"El producto "+this.state.mostSoldItem.description+" (id "+this.state.mostSoldItem.id+") es el más popular, habiéndose vendido "+ this.state.mostSoldItem.timesSold+ " veces."}

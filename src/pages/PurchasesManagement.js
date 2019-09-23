@@ -1,7 +1,12 @@
 import React, { Component } from 'react';
-import { Grid, Row, Col, Tab, Tabs, Modal } from 'react-bootstrap';
+import { Grid, Row, Col, Tab, Tabs, Modal, Table, Form, Button } from 'react-bootstrap';
 
-import '../../node_modules/bootstrap/dist/css/bootstrap.min.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCalendar, faLaptop, faMobileAlt, faArchive } from '@fortawesome/free-solid-svg-icons';
+
+import CenteredSpinner from '../components/Utility/CenteredSpinner';
+import PageTitle from '../components/Utility/PageTitle';
+import AlertsHandler from '../components/Utility/AlertsHandler';
 
 class PurchasesManagement extends Component {
     constructor(props, context) {
@@ -9,12 +14,13 @@ class PurchasesManagement extends Component {
 
         this.URL = "https://mafi-backend.herokuapp.com";
 
-        this.handleShow = this.handleShow.bind(this);
-        this.handleClose = this.handleClose.bind(this);
+        this.OpenModal = this.OpenModal.bind(this);
+        this.CloseModal = this.CloseModal.bind(this);
 
         this.state = {
-            submitted: false,
-            show: false,
+            FetchDone: false,
+            NewPurchaseSubmitted: false,
+            ShowModal: false,
             purchases: [],
             purchase: {
                 id: '',
@@ -37,7 +43,7 @@ class PurchasesManagement extends Component {
         };
     }
 
-    handleSubmit = (event) => {
+    SubmitNewPurchase = (event) => {
         event.preventDefault();
 
         var date = event.target[0].value;
@@ -46,53 +52,50 @@ class PurchasesManagement extends Component {
         var description = event.target[3].value;
 
         if ( date == '' || item_id == '' || item_qty == '' || description == '') {
-            this.state.submitted = false;
-            this.handleShow();
+            this.setState({ NewPurchaseSubmitted: false });
+            this.OpenModal();
         }else{
             fetch(this.URL+`/purchases/add?date=${date}&item_id=${item_id}&item_qty=${item_qty}&description=${description}`)
-                .then(this.getOrders)
-                .catch(err => console.error(err))
+            .then(this.GetPurchases)
+            .catch(err => console.error(err))
 
-            this.state.submitted = true;
-            this.handleShow();
+            this.setState({ NewPurchaseSubmitted: true });
+            this.OpenModal();
         }
     }
 
-    handleClose() {
-        this.setState({ show: false });
+    CloseModal() {
+        this.setState({ ShowModal: false });
     }
 
-    handleShow() {
-        this.setState({ show: true });
+    OpenModal() {
+        this.setState({ ShowModal: true });
     }
 
     // Database stuff
     componentDidMount(){
-        this.getPurchases();
-        this.getItems();
+        this.GetPurchases();
+        this.GetItems();
     }
 
-    getPurchases = _ => {
+    GetPurchases = _ => {
         fetch(this.URL+`/purchases`)
         .then(response => response.json())
-        .then(resp => this.setState({ purchases: resp.data }))
+        .then(resp => this.setState({ purchases: resp.data, FetchDone: true }))
         .catch(err => console.error(err))
     }
 
-    getItems = _ => {
+    GetItems = _ => {
         fetch(this.URL+`/items`)
         .then(response => response.json())
         .then(resp => this.setState({ items: resp.data }))
         .catch(err => console.error(err))
     }
 
-    numberWithDots = (x) => {
-        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    }
+    NumberWithDots = (x) => { return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
 
-    // renderPurchases = ({id, date, item_id, item_qty, description, total_price} ) => <option key={id} value={id}> { description } </option>
-    renderItem = ({id, description, times_bought, times_sold, type, color, sell_price} ) => <option key={id} value={id}> { description } </option>
-    renderPurchases = ({id, date, description, item_qty, unit_price } ) => <tr key={id}><td>{ id }</td><td>{ date }</td><td>{ description }</td><td>{ item_qty }</td><td>{ "$"+this.numberWithDots(unit_price*item_qty) }</td></tr>
+    RenderItems = ({id, description, times_bought, times_sold, type, color, sell_price} ) => <option key={id} value={id}> { description } </option>
+    RenderPurchases = ({id, date, description, item_qty, unit_price } ) => <tr key={id}><td>{ id }</td><td>{ date }</td><td>{ description }</td><td>{ item_qty }</td><td>{ "$"+this.NumberWithDots(unit_price*item_qty) }</td></tr>
 
     render() {
         const { purchases, purchase } = this.state;
@@ -100,87 +103,74 @@ class PurchasesManagement extends Component {
 
         return (
             !(purchases.length || items.length) ? (
-                <span>Loading...</span>
+                <CenteredSpinner />
             ) : (
                 <div>
-                    <div className="page-title">
-                        <h1>Gestión de compras</h1>
-                        <hr />
-                    </div>
+                    <PageTitle text="Gestión de compras" />
 
                     <Tabs defaultActiveKey={1} id="uncontrolled-tab" animation={false}>
                         <Tab eventKey={1} title="Ver compras realizadas">
-                            <div className="tab-container">
-                                <div className="long-block">
-                                    <div className="block-title">Compras realizadas</div>
+                            <Table responsive size="sm">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">ID</th>
+                                        <th scope="col">Fecha</th>
+                                        <th scope="col">Producto comprado</th>
+                                        <th scope="col">Cantidad comprada</th>
+                                        <th scope="col">Precio total</th>
+                                    </tr>
+                                </thead>
 
-                                    <div className="block-body">
-                                        <table className="table table-sm table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th scope="col">ID</th>
-                                                    <th scope="col">Fecha</th>
-                                                    <th scope="col">Producto comprado</th>
-                                                    <th scope="col">Cantidad comprada</th>
-                                                    <th scope="col">Precio total</th>
-                                                </tr>
-                                            </thead>
-
-                                            <tbody>
-                                                {
-                                                    purchases.map(this.renderPurchases)
-                                                }
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
+                                <tbody>
+                                    {
+                                        purchases.map(this.RenderPurchases)
+                                    }
+                                </tbody>
+                            </Table>
                         </Tab>
 
                         <Tab eventKey={2} title="Agregar compras">
-                            <div className="tab-container">
-                                <form onSubmit={this.handleSubmit}>
-                                    <div className="form-row">
-                                        <div className="form-group col-md-6">
-                                            <label htmlFor="date">Fecha de la compra</label>
-                                            <input placeholder="25/01/1998" id="date" name="date" type="text" className="form-control" />
-                                        </div>
+                                <Form onSubmit={this.SubmitNewPurchase}>
+                                    <Form.Row>
+                                        <Form.Group as={Col}>
+                                            <Form.Label>Fecha de la compra</Form.Label>
+                                            <Form.Control as="input" placeholder="25/01/1998" id="date" name="date" type="text" />
+                                        </Form.Group>
 
-                                        <div className="form-group col-md-6">
-                                            <label htmlFor="item_id">Selecciona el artículo que se compró</label>
+                                        <Form.Group as={Col}>
+                                            <Form.Label>Selecciona el artículo que se compró</Form.Label>
 
-                                            <select id="item_id" name="item_id" className="form-control">
-                                                { items.map(this.renderItem) }
-                                            </select>
-                                        </div>
-                                    </div>
+                                            <Form.Control as="select" id="item_id" name="item_id">
+                                                { items.map(this.RenderItems) }
+                                            </Form.Control>
+                                        </Form.Group>
+                                    </Form.Row>
 
-                                    <div className="form-row">
-                                        <div className="form-group col-md-6">
-                                            <label htmlFor="item_qty">Ingresa la cantidad que se compró</label>
-                                            <input placeholder="4" id="item_qty" name="item_qty" type="text" className="form-control" />
-                                        </div>
+                                    <Form.Row>
+                                        <Form.Group as={Col}>
+                                            <Form.Label>Ingresa la cantidad que se compró</Form.Label>
+                                            <Form.Control as="input" placeholder="4" id="item_qty" name="item_qty" type="text" />
+                                        </Form.Group>
 
-                                        <div className="form-group col-md-6">
-                                            <label htmlFor="description">Descripción de la compra</label>
-                                            <input placeholder="Compra de tres pañaleras" id="description" name="description" type="text" className="form-control" />
-                                        </div>
-                                    </div>
+                                        <Form.Group as={Col}>
+                                            <Form.Label>Descripción de la compra</Form.Label>
+                                            <Form.Control as="input" placeholder="Compra de tres pañaleras" id="description" name="description" type="text" />
+                                        </Form.Group>
+                                    </Form.Row>
 
-                                    <button type="submit" className="btn btn-primary">Enviar datos</button>
-                                </form>
-                            </div>
+                                    <Button type="submit">Enviar datos</Button>
+                                </Form>
                         </Tab>
                     </Tabs>
 
-                    <Modal show={this.state.show} onHide={this.handleClose} animation={true}>
+                    <Modal show={this.state.ShowModal} onHide={this.CloseModal} animation={true}>
                         <Modal.Header>
                             <Modal.Title>Acerca de la compra</Modal.Title>
                         </Modal.Header>
 
                         <Modal.Body>
                                 {
-                                    (!this.state.submitted)?
+                                    (!this.state.NewPurchaseSubmitted)?
                                         <p>Faltan datos por ingresar.</p>
                                         :
                                         <p>¡Enviado!</p>
@@ -188,7 +178,7 @@ class PurchasesManagement extends Component {
                         </Modal.Body>
 
                         <Modal.Footer>
-                            <button className="btn btn-primary" onClick={this.handleClose}>Cerrar</button>
+                            <Button onClick={this.CloseModal}>Cerrar</Button>
                         </Modal.Footer>
                     </Modal>
 
