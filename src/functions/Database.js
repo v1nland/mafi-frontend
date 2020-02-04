@@ -88,6 +88,28 @@ export function InsertOrder( jsonData ) {
     })
 }
 
+export function UpdateOrderState( id, currentValue ) {
+    var FetchURL = `${APIURL()}/order/${id}`;
+    var nextValue = 1 - parseInt(currentValue, 10);
+
+    return fetch(FetchURL, {
+        method: 'PUT',
+        mode: "cors",
+        cache: "no-cache",
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8"
+        },
+        body: JSON.stringify( { "finished": nextValue } )
+    })
+    .then(response => response.json())
+    .then(resp => {
+        return resp
+    })
+    .catch(err => {
+        return err
+    })
+}
+
 /////////////////// BEGIN /////////////////////////
 /////////////////// STATS       ///////////////////
 /////////////////// STATS       ///////////////////

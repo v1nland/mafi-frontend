@@ -8,6 +8,9 @@ import CenteredSpinner from '../components/Utility/CenteredSpinner';
 import PageTitle from '../components/Utility/PageTitle';
 import AlertsHandler from '../components/Utility/AlertsHandler';
 
+import { FetchItems, FetchOrders, InsertOrder } from '../functions/Database'
+import { NumberWithDots, FormatDate, FormatDiscount } from '../functions/Helper'
+
 class InventoryManagement extends Component {
     constructor(props, context) {
         super(props, context);

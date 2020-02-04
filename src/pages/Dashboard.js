@@ -108,7 +108,7 @@ class Dashboard extends Component {
                                     <TimelineElement
                                         inverted=""
                                         color="timeline-badge success"
-                                        icon="fa fa-check"
+                                        icon=<FontAwesomeIcon icon={faCheck} />
                                         title={mostSoldItem.Description}
                                         source={"Vendido "+mostSoldItem.Times +" veces"}
                                         body={"El producto "+mostSoldItem.Description+" (id "+mostSoldItem.Id+") es el más popular, habiéndose vendido "+ mostSoldItem.Times+ " veces."}

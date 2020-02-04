@@ -9,14 +9,12 @@ import CenteredSpinner from '../components/Utility/CenteredSpinner';
 import PageTitle from '../components/Utility/PageTitle';
 import AlertsHandler from '../components/Utility/AlertsHandler';
 
-import { FetchItems, FetchOrders, InsertOrder } from '../functions/Database'
+import { FetchItems, FetchOrders, InsertOrder, UpdateOrderState } from '../functions/Database'
 import { NumberWithDots, FormatDate, FormatDiscount } from '../functions/Helper'
 
 class OrderManagement extends Component {
     constructor(props, context) {
         super(props, context);
-
-        this.URL = "https://mafi-backend.herokuapp.com";
 
         this.HandleSwapOrderState = this.HandleSwapOrderState.bind(this);
         this.CloseSwapStateModal = this.CloseSwapStateModal.bind(this);
@@ -33,7 +31,7 @@ class OrderManagement extends Component {
     }
 
     // Modal stuff
-    handleSubmit = (event) => {
+    HandleSubmitNewOrder = (event) => {
         event.preventDefault();
         const et = event.target;
 
@@ -73,15 +71,14 @@ class OrderManagement extends Component {
 
     HandleSwapOrderState( e ) {
         var idEdit = e.currentTarget.id;
+        var currentValue = e.currentTarget.attributes[1].value
 
         this.setState({ showOrderStateSwapModal: true });
-        this.setState({ idEdit: idEdit });
+        this.setState({ idEdit: idEdit, currentValue: currentValue });
     }
 
     SwapOrderState(){
-        console.log(this.URL+`/orders/update?order_id=` + this.state.idEdit);
-
-        fetch(this.URL+`/orders/update?order_id=` + this.state.idEdit)
+        UpdateOrderState( this.state.idEdit, this.state.currentValue )
         .then( r => this.RefreshOrders() )
         .catch(err => console.error(err))
 
@@ -99,12 +96,13 @@ class OrderManagement extends Component {
             this.setState({ orders: res.Data, fetchDone: true }, () => {
                 for (var i = 0; i < this.state.orders.length; i++) {
                     var current_id = this.state.orders[i]['ID']
+                    var current_value = this.state.orders[i]['finished']
 
                     this.state.orders[i]['precio'] = '$'+NumberWithDots( this.state.orders[i]['item']['sell_price'] )
                     this.state.orders[i]['date'] = FormatDate( this.state.orders[i]['date'] )
                     this.state.orders[i]['contact'] = '+569 '+this.state.orders[i]['contact']
                     this.state.orders[i]['source'] = (this.state.orders[i]['source'] == 'F') ? <FontAwesomeIcon icon={faLaptop} /> : <FontAwesomeIcon icon={faMobileAlt} />
-                    this.state.orders[i]['finished'] = <Button size="sm" id={current_id} onClick={this.HandleSwapOrderState}> { this.state.orders[i]['finished'] ? <FontAwesomeIcon icon={faCheckCircle} /> : <FontAwesomeIcon icon={faTimes} /> } </Button>
+                    this.state.orders[i]['finished'] = <Button size="sm" id={current_id} cvalue={current_value} onClick={this.HandleSwapOrderState}> { this.state.orders[i]['finished'] ? <FontAwesomeIcon icon={faCheckCircle} /> : <FontAwesomeIcon icon={faTimes} /> } </Button>
                     this.state.orders[i]['acciones'] = <Button size="sm" variant="danger" id={current_id} onClick={this.HandleEditModalData}><FontAwesomeIcon icon={faTrash} /></Button>
                 }
             });
@@ -208,7 +206,7 @@ class OrderManagement extends Component {
                         </Tab>
 
                         <Tab eventKey={2} title="Agendar nuevo pedido">
-                            <Form onSubmit={this.handleSubmit}>
+                            <Form onSubmit={this.HandleSubmitNewOrder}>
                                 <Form.Row>
                                     <Form.Group as={Col}>
                                         <Form.Label>Nombre del comprador (o Instagram)</Form.Label>
@@ -267,7 +265,66 @@ class OrderManagement extends Component {
                                 <Form.Row>
                                     <Form.Group as={Col}>
                                         <Form.Label>Indica la ubicación de encuentro</Form.Label>
-                                        <Form.Control as="input" placeholder="Estación de metro Los Héroes, 19:00hrs." id="location" name="location" />
+                                        {/*<Form.Control as="input" placeholder="Estación de metro Los Héroes, 19:00hrs." id="location" name="location" />*/}
+                                        <Form.Control as="select" id="location" name="location">
+                                            <optgroup label="Línea 1">
+                                                <option>Estación San Pablo (L1)</option>
+                                                <option>Estación Neptuno</option>
+                                                <option>Estación Pajaritos</option>
+                                                <option>Estación Las Rejas</option>
+                                                <option>Estación Ecuador</option>
+                                                <option>Estación San Alberto Hurtado</option>
+                                                <option>Estación Usach</option>
+                                                <option>Estación Central</option>
+                                                <option>Estación ULA</option>
+                                                <option>Estación República</option>
+                                                <option>Estación Los Héroes (L1)</option>
+                                                <option>Estación Moneda</option>
+                                                <option>Estación U. de Chile</option>
+                                                <option>Estación Santa Lucía</option>
+                                                <option>Estación U. Católica</option>
+                                                <option>Estación Baquedano</option>
+                                            </optgroup>
+                                            <optgroup label="Línea 2">
+                                                <option>Estación La Cisterna</option>
+                                                <option>Estación El Parrón</option>
+                                                <option>Estación Lo Ovalle</option>
+                                                <option>Estación Cuidad del niño</option>
+                                                <option>Estación Departamental</option>
+                                                <option>Estación Lo Vial</option>
+                                                <option>Estación San Miguel</option>
+                                                <option>Estación El ano</option>
+                                                <option>Estación Franklin</option>
+                                                <option>Estación Rondizzoni</option>
+                                                <option>Estación Parque O'Higgins</option>
+                                                <option>Estación Toesca</option>
+                                                <option>Estación Los Héroes (L2)</option>
+                                            </optgroup>
+                                            <optgroup label="Línea 5">
+                                                <option>Estación Plaza Maipú</option>
+                                                <option>Estación Santiago Bueras</option>
+                                                <option>Estación Del Sol</option>
+                                                <option>Estación Monte Tabor</option>
+                                                <option>Estación Las Parcelas</option>
+                                                <option>Estación Laguna Sur</option>
+                                                <option>Estación Barrancas</option>
+                                                <option>Estación Pudahuel</option>
+                                                <option>Estación San Pablo (L5)</option>
+                                                <option>Estación Lo Prado</option>
+                                                <option>Estación Blanqueado</option>
+                                                <option>Estación Gruta de Lourdes</option>
+                                                <option>Estación Quinta Normal </option>
+                                                <option>Estación Cummings</option>
+                                                <option>Estación Santa Ana</option>
+                                                <option>Estación Plaza de Armas</option>
+                                                <option>Estación Bellas Artes</option>
+                                                <option>Estación Baquedano</option>
+                                            </optgroup>
+                                            <optgroup label="Envíos">
+                                                <option>Envío Starken</option>
+                                                <option>Envío Chilexpress</option>
+                                            </optgroup>
+                                        </Form.Control>
                                     </Form.Group>
                                 </Form.Row>
 
