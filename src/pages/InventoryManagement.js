@@ -1,7 +1,12 @@
 import React, { Component } from 'react';
-import { Grid, Row, Col, Tab, Tabs, Modal } from 'react-bootstrap';
+import { Grid, Row, Col, Tab, Tabs, Modal, Table, Form, Button } from 'react-bootstrap';
 
-import '../../node_modules/bootstrap/dist/css/bootstrap.min.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCalendar, faLaptop, faMobileAlt, faArchive } from '@fortawesome/free-solid-svg-icons';
+
+import CenteredSpinner from '../components/Utility/CenteredSpinner';
+import PageTitle from '../components/Utility/PageTitle';
+import AlertsHandler from '../components/Utility/AlertsHandler';
 
 class InventoryManagement extends Component {
     constructor(props, context) {
@@ -9,12 +14,13 @@ class InventoryManagement extends Component {
 
         this.URL = "https://mafi-backend.herokuapp.com";
 
-        this.handleShow = this.handleShow.bind(this);
-        this.handleClose = this.handleClose.bind(this);
+        this.OpenModal = this.OpenModal.bind(this);
+        this.CloseModal = this.CloseModal.bind(this);
 
         this.state = {
-            submitted: false,
-            show: false,
+            FetchDone: false,
+            NewProductSubmitted: false,
+            ShowModal: false,
             items: [],
             item: {
                 id: '',
@@ -28,7 +34,7 @@ class InventoryManagement extends Component {
         };
     }
 
-    handleSubmit = (event) => {
+    SubmitNewProduct = (event) => {
         event.preventDefault();
 
         var description = event.target[0].value;
@@ -38,144 +44,126 @@ class InventoryManagement extends Component {
         var sell_price = event.target[4].value;
 
         if ( description == '' || type == '' || color == '' || purchase_price == '' || sell_price == '') {
-            this.state.submitted = false;
-            this.handleShow();
+            this.setState({ NewProductSubmitted: false });
+            this.OpenModal();
         }else{
             fetch(this.URL+`/items/add?description=${description}&type=${type}&color=${color}&purchase_price=${purchase_price}&sell_price=${sell_price}`)
-                .then(this.getOrders)
-                .catch(err => console.error(err))
+            .then(this.GetItems)
+            .catch(err => console.error(err))
 
-            this.state.submitted = true;
-            this.handleShow();
+            this.setState({ NewProductSubmitted: true });
+            this.OpenModal();
         }
     }
 
-    handleClose() {
-        this.setState({ show: false });
+    CloseModal() {
+        this.setState({ ShowModal: false });
     }
 
-    handleShow() {
-        this.setState({ show: true });
+    OpenModal() {
+        this.setState({ ShowModal: true });
     }
 
     componentDidMount(){
-        this.getItems();
+        this.GetItems();
     }
 
-    getItems = _ => {
+    GetItems = _ => {
         fetch(this.URL+`/items`)
         .then(response => response.json())
-        .then(resp => this.setState({ items: resp.data }))
+        .then(resp => this.setState({ items: resp.data, FetchDone: true }))
         .catch(err => console.error(err))
     }
 
-    numberWithDots = (x) => {
-        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    }
+    NumberWithDots = (x) => { return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
 
-    renderItem = ({id, description, times_bought, times_sold, type, color, sell_price} ) => <tr key={id}><td>{id}</td><td>{description}</td><td>{times_bought}</td><td>{times_sold}</td><td>{times_bought-times_sold}</td><td><img src={ this.URL+"/img?image=" + type } alt={type}/></td><td>{color}</td><td>{"$"+this.numberWithDots(sell_price)}</td></tr>
+    RenderItems = ({id, description, times_bought, times_sold, type, color, sell_price} ) => <tr key={id}><td>{id}</td><td>{description}</td><td>{times_bought}</td><td>{times_sold}</td><td>{times_bought-times_sold}</td><td><img src={ this.URL+"/img?image=" + type } alt={type}/></td><td>{"$"+this.NumberWithDots(sell_price)}</td></tr>
 
     render() {
         const { items, item } = this.state;
 
         return (
-            !(items.length) ? (
-                <span>Loading...</span>
+            !(this.state.FetchDone) ? (
+                <CenteredSpinner />
             ) : (
                 <div>
-                    <div className="page-title">
-                        <h1>Gestión de inventario</h1>
-                        <hr />
-                    </div>
+                    <PageTitle text="Gestión de inventario" />
 
                     <Tabs defaultActiveKey={1} id="uncontrolled-tab" animation={false}>
                         <Tab eventKey={1} title="Ver productos">
-                            <div className="tab-container">
-                                <div className="long-block">
-                                    <div className="block-title">Catálogo</div>
+                            <Table responsive size="sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Descripción</th>
+                                        <th>Veces comprado</th>
+                                        <th>Veces vendido</th>
+                                        <th>Stock</th>
+                                        <th>Tipo</th>
+                                        <th>Precio</th>
+                                    </tr>
+                                </thead>
 
-                                    <div className="block-body">
-                                        <table className="table table-sm table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th scope="col">ID</th>
-                                                    <th scope="col">Descripción</th>
-                                                    <th scope="col">Veces comprado</th>
-                                                    <th scope="col">Veces vendido</th>
-                                                    <th scope="col">Stock</th>
-                                                    <th scope="col">Tipo</th>
-                                                    <th scope="col">Color</th>
-                                                    <th scope="col">Precio</th>
-                                                </tr>
-                                            </thead>
-
-                                            <tbody>
-                                                { items.map(this.renderItem) }
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
+                                <tbody>
+                                    { items.map(this.RenderItems) }
+                                </tbody>
+                            </Table>
                         </Tab>
 
                         <Tab eventKey={2} title="Agregar productos">
-                            <div className="tab-container">
-                                <form onSubmit={this.handleSubmit}>
-                                    <div className="form-group">
-                                        <label htmlFor="description">Descripción del producto</label>
-                                        <input placeholder="Mochila Kanken roja" id="description" name="description" type="text" className="form-control" />
-                                    </div>
+                                <Form onSubmit={this.SubmitNewProduct}>
+                                    <Form.Row>
+                                        <Form.Group as={Col}>
+                                            <Form.Label>Descripción del producto</Form.Label>
+                                            <Form.Control as="input" placeholder="Mochila Kanken Rojo" id="description" name="description" type="text" />
+                                        </Form.Group>
+                                    </Form.Row>
 
-                                    <div className="form-row">
-                                        <div className="form-group col-md-6">
-                                            <label htmlFor="number">Estilo del producto</label>
-                                            <input placeholder="KANKEN" id="type" name="type" type="text" className="form-control" />
-                                        </div>
+                                    <Form.Row>
+                                        <Form.Group as={Col}>
+                                            <Form.Label>Estilo del producto</Form.Label>
+                                            <Form.Control as="input" placeholder="KANKEN" id="type" name="type" type="text" />
+                                        </Form.Group>
 
-                                        <div className="form-group col-md-6">
-                                            <label htmlFor="color">Color del producto (Usar color neutro: ROJO, ROSADO, AMARILLO)</label>
-                                            <input placeholder="ROSADO" id="color" name="color" type="text" className="form-control" />
-                                        </div>
-                                    </div>
+                                        <Form.Group as={Col}>
+                                            <Form.Label>Color del producto (Usar color neutro: ROJO, ROSADO, AMARILLO)</Form.Label>
+                                            <Form.Control as="input" placeholder="ROSADO" id="color" name="color" type="text" />
+                                        </Form.Group>
+                                    </Form.Row>
 
-                                    <div className="form-row">
-                                        <div className="form-group col-md-6">
-                                            <label htmlFor="purchase_price">Indica el precio de compra</label>
-                                            <input placeholder="5500" id="purchase_price" name="purchase_price" className="form-control" />
-                                        </div>
+                                    <Form.Row>
+                                        <Form.Group as={Col}>
+                                            <Form.Label>Indica el precio de compra</Form.Label>
+                                            <Form.Control as="input" placeholder="5500" id="purchase_price" name="purchase_price" type="text" />
+                                        </Form.Group>
 
-                                        <div className="form-group col-md-6">
-                                            <label htmlFor="sell_price">Indica el precio de venta</label>
-                                            <input placeholder="11000" id="sell_price" name="sell_price" className="form-control" />
-                                        </div>
-                                    </div>
+                                        <Form.Group as={Col}>
+                                            <Form.Label>Indica el precio de venta</Form.Label>
+                                            <Form.Control as="input" placeholder="11000" id="sell_price" name="sell_price" type="text" />
+                                        </Form.Group>
+                                    </Form.Row>
 
-                                    <button type="submit" className="btn btn-primary">Enviar datos</button>
-                                </form>
-                            </div>
+                                    <Button type="submit">Enviar datos</Button>
+                                </Form>
                         </Tab>
                     </Tabs>
 
-                    <Modal show={this.state.show} onHide={this.handleClose} animation={true}>
+                    <Modal show={this.state.ShowModal} onHide={this.CloseModal} animation={true}>
                         <Modal.Header>
                             <Modal.Title>Acerca del producto</Modal.Title>
                         </Modal.Header>
 
                         <Modal.Body>
-                                {
-                                    (!this.state.submitted)?
+                                {(!this.state.NewProductSubmitted)?
                                     <p>Faltan datos por ingresar.</p>
                                     :
-                                    <p>¡Enviado!</p>
-                                }
+                                    <p>¡Enviado!</p>}
                         </Modal.Body>
 
                         <Modal.Footer>
-                            <button className="btn btn-primary" onClick={this.handleClose}>Cerrar</button>
+                            <Button onClick={this.CloseModal}>Cerrar</Button>
                         </Modal.Footer>
                     </Modal>
-
-                    <br />
                 </div>
             )
         );

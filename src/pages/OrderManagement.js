@@ -18,6 +18,7 @@ class OrderManagement extends Component {
 
         this.URL = "https://mafi-backend.herokuapp.com";
 
+<<<<<<< HEAD
         this.HandleSwapOrderState = this.HandleSwapOrderState.bind(this);
         this.CloseSwapStateModal = this.CloseSwapStateModal.bind(this);
         this.SwapOrderState = this.SwapOrderState.bind(this);
@@ -27,23 +28,63 @@ class OrderManagement extends Component {
             idEdit: 0,
             submitted: false,
             showOrderStateSwapModal: false,
+=======
+        this.OpenOrderFormModal = this.OpenOrderFormModal.bind(this);
+        this.CloseOrderFormModal = this.CloseOrderFormModal.bind(this);
+
+        this.OpenSwapStateModal = this.OpenSwapStateModal.bind(this);
+        this.CloseSwapStateModal = this.CloseSwapStateModal.bind(this);
+
+        this.SwapOrderState = this.SwapOrderState.bind(this);
+
+        this.state = {
+            FetchDone: false,
+            IDtoChange: 0,
+            NewOrderSubmitted: false,
+            ShowOrderFormModal: false,
+            ShowSwapStateModal: false,
+>>>>>>> 3d31bebe11a956dfe0d4631224e3fa04388be0c6
             items: [],
             orders: [],
         };
     }
 
     // Modal stuff
-    handleSubmit = (event) => {
+    SubmitNewOrder = (event) => {
         event.preventDefault();
         const et = event.target;
 
+<<<<<<< HEAD
         for (var i = 0; i < et.length - 1; i++) {
             if (et[i].value == ''){
                 this.AlertsHandler.generate('danger', '¡Error!', 'Faltan datos por ingresar.');
                 return
             }
+=======
+        var buyer = event.target[0].value;
+        var description = event.target[1].value;
+        var contact = event.target[2].value;
+        var date = event.target[3].value;
+        var item_id = event.target[4].value;
+        var source = event.target[5].value;
+        var hour = event.target[6].value;
+        var discount = event.target[7].value;
+        var location = event.target[8].value;
+
+        if ( buyer == '' || description == '' || contact == '' || date == '' || item_id == '' || source == '' || hour == '' || discount == '' ||location == '') {
+            this.setState({ NewOrderSubmitted: false });
+            this.OpenOrderFormModal();
+        }else{
+            fetch(this.URL+`/orders/add?buyer=${buyer}&description=${description}&contact=${contact}&date=${date}&item_id=${item_id}&source=${source}&hour=${hour}&discount=${discount}&location=${location}&finished=0`)
+            .then(this.GetOrders)
+            .catch(err => console.error(err))
+
+            this.setState({ NewOrderSubmitted: true });
+            this.OpenOrderFormModal();
+>>>>>>> 3d31bebe11a956dfe0d4631224e3fa04388be0c6
         }
 
+<<<<<<< HEAD
         let jsonData = {
             "buyer": et[0].value,
             "description": et[1].value,
@@ -112,6 +153,59 @@ class OrderManagement extends Component {
     }
 
     renderItem = ({ID, description} ) => <option key={ID} value={ID}> { description } </option>
+=======
+    CloseOrderFormModal() {
+        this.setState({ ShowOrderFormModal: false });
+    }
+
+    OpenOrderFormModal() {
+        this.setState({ ShowOrderFormModal: true });
+    }
+
+    CloseSwapStateModal() {
+        this.setState({ ShowSwapStateModal: false });
+    }
+
+    OpenSwapStateModal( id ) {
+        this.setState({ ShowSwapStateModal: true });
+        this.setState({ IDtoChange: id });
+    }
+
+    SwapOrderState(){
+        fetch(this.URL+`/orders/update?order_id=` + this.state.IDtoChange)
+        .then(this.GetOrders)
+        .catch(err => console.error(err))
+
+        this.setState({ ShowSwapStateModal: false });
+    }
+
+    componentDidMount(){
+        this.GetItems();
+        this.GetOrders();
+    }
+
+    GetItems = _ => {
+        fetch(this.URL+`/items`)
+        .then(response => response.json())
+        .then(resp => this.setState({ items: resp.data }))
+        .catch(err => console.error(err))
+    }
+
+    GetOrders = _ => {
+        fetch(this.URL+`/orders`)
+        .then(response => response.json())
+        .then(resp => this.setState({ orders: resp.data, FetchDone: true }))
+        .catch(err => console.error(err))
+    }
+
+    NumberWithDots = (x) => { return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+    FormatDiscount = (x, d) => { return "$"+this.NumberWithDots(Math.round(x*(1-d/100))); }
+
+    RenderItems = ( {id, description} ) => <option key={id} value={id}> { description } </option>
+    RenderOrders = ({id, buyer, description, date, contact, total_price, source, location, hour, discount, finished}) => (
+        <tr key={id}> <td>{buyer.toUpperCase()}</td> <td>{description}</td> <td>{date}</td> <td>{"+569 "+contact}</td> <td>{this.FormatDiscount(total_price, discount)}</td> <td> <img src={this.URL+"/img?image="+source} /> </td> <td>{location}</td> <td>{hour}</td> <td onClick={() => this.OpenSwapStateModal(id)}> <img src={ this.URL+"/img?image=" + finished } /></td></tr>
+    )
+>>>>>>> 3d31bebe11a956dfe0d4631224e3fa04388be0c6
 
     render() {
         const { items, item } = this.state;
@@ -208,7 +302,7 @@ class OrderManagement extends Component {
                         </Tab>
 
                         <Tab eventKey={2} title="Agendar nuevo pedido">
-                            <Form onSubmit={this.handleSubmit}>
+                            <Form onSubmit={this.SubmitNewOrder}>
                                 <Form.Row>
                                     <Form.Group as={Col}>
                                         <Form.Label>Nombre del comprador (o Instagram)</Form.Label>
@@ -238,7 +332,7 @@ class OrderManagement extends Component {
                                         <Form.Label>Selecciona el pedido</Form.Label>
 
                                         <Form.Control as="select" id="item_id" name="item_id">
-                                            { items.map(this.renderItem) }
+                                            { items.map(this.RenderItems) }
                                         </Form.Control>
                                     </Form.Group>
 
@@ -284,8 +378,6 @@ class OrderManagement extends Component {
                             <Button className="btn btn-secondary" onClick={this.CloseSwapStateModal}>Cerrar</Button>
                         </Modal.Footer>
                     </Modal>
-
-                    <br />
                 </div>
             )
         );

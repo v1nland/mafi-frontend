@@ -6,7 +6,7 @@ import Donut from '../components/Donut/Donut';
 import TimelineElement from '../components/Utility/TimelineElement';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendar, faLaptop, faMobileAlt, faArchive } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faLaptop, faMobileAlt, faArchive, faCheck } from '@fortawesome/free-solid-svg-icons';
 
 import CenteredSpinner from '../components/Utility/CenteredSpinner';
 import PageTitle from '../components/Utility/PageTitle';

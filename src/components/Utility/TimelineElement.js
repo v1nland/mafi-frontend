@@ -13,7 +13,7 @@ class TimelineElement extends Component{
         return(
             <li className={this.props.inverted}>
                 <div className={this.props.color}>
-                    <i className={this.props.icon} />
+                    {this.props.icon}
                 </div>
 
                 <div className="timeline-panel">
