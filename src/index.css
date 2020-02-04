@@ -30,15 +30,15 @@ img{
     max-height: 80vh;
     background-color: white;
     padding: 1%;
+    padding-top: 3%;
     border-left: 1px solid #dee2e6;
     border-right: 1px solid #dee2e6;
     border-bottom: 1px solid #dee2e6;
     overflow-x: hidden;
 }
-table{
+table {
     text-align: center;
-    margin-left: auto;
-    margin-right: auto;
+    font-size: 15px;
 }
 
 /* Side bar CSS */

@@ -13,72 +13,43 @@ import PageTitle from '../components/Utility/PageTitle';
 import AlertsHandler from '../components/Utility/AlertsHandler';
 import { Tooltip, XAxis, YAxis, Area, CartesianGrid, AreaChart, Bar, BarChart, ResponsiveContainer } from '../vendor/recharts';
 
+import { FetchPendingOrders, FetchMostSoldItem, FetchBox, FetchSources } from '../functions/Database'
+import { NumberWithDots } from '../functions/Helper'
+
 class Dashboard extends Component {
     constructor(props, context){
         super(props, context);
 
-        this.URL = "https://mafi-backend.herokuapp.com";
-
         this.state = {
-            FetchDone: false,
-            Revenue: {
-                income: 0,
-                inverted: 0,
-                box_money: 0
+            fetchDone: false,
+            revenue: {
+                Income: 0,
+                Outcome: 0,
+                Currency: 0
             },
-            FacebookSales: 0,
-            InstagramSales: 0,
+            fbSales: 0,
+            igSales: 0,
             orders: [],
-            mostSoldItem: {
-                id: 0,
-                description: '',
-                type: '',
-                color: '',
-                timesSold: 0
-            }
         };
     }
 
     componentDidMount(){
-        this.FetchPendingOrders();
-        this.FetchMostSoldItem();
-        this.FetchBoxRevenue();
-        this.FetchSalesBySource();
+        FetchPendingOrders().then(res => this.setState({ orders: res.Data, fetchDone: true }) )
+        FetchMostSoldItem().then(res => this.setState({ mostSoldItem: res.Data[0] }))
+        FetchBox().then(res => this.setState({ revenue: res.Data }))
+        FetchSources().then(res => this.setState({ fbSales: res.Data[0].Quantity, igSales: res.Data[1].Quantity }))
     }
-
-    FetchPendingOrders = _ => {
-        fetch(this.URL+`/orders/pending`)
-        .then(response => response.json())
-        .then(resp => this.setState({ orders: resp.data, FetchDone: true }))
-        .catch(err => console.error(err))
-    }
-
-    FetchMostSoldItem = _ => {
-        fetch(this.URL+`/items/mostSold`)
-        .then(response => response.json())
-        .then(resp => this.setState({ mostSoldItem: resp.data[0] }))
-        .catch(err => console.error(err))
-    }
-
-    FetchBoxRevenue = _ => {
-        fetch(this.URL+`/stats/box`)
-        .then(response => response.json())
-        .then(resp => this.setState({ Revenue: resp.data[0] }))
-        .catch(err => console.error(err))
-    }
-
-    FetchSalesBySource = _ => {
-        fetch(this.URL+`/stats/salesBySource`)
-        .then(response => response.json())
-        .then(resp => this.setState({ FacebookSales: resp.data[0].quantity, InstagramSales: resp.data[1].quantity }))
-        .catch(err => console.error(err))
-    }
-
-    numberWithDots = (x) => { return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
 
     render() {
+        const { fetchDone } = this.state;
+        const { revenue } = this.state;
+        const { fbSales } = this.state;
+        const { igSales } = this.state;
+        const { orders } = this.state;
+        const { mostSoldItem } = this.state;
+
         return (
-            (this.state.FetchDone === false) ? (
+            (fetchDone === false) ? (
                 <CenteredSpinner />
             ) : (
                 <div>
@@ -90,7 +61,7 @@ class Dashboard extends Component {
                                 <StatWidget
                                     color="primary"
                                     icon=<FontAwesomeIcon icon={faCalendar} size="3x" />
-                                    count={this.state.orders.length.toString()}
+                                    count={orders.length.toString()}
                                     headerText="Pedidos pendientes"
                                     footerText="Ver detalles"
                                     linkTo="/#/OrderManagement"
@@ -99,7 +70,7 @@ class Dashboard extends Component {
                                 <StatWidget
                                     color="danger"
                                     icon=<FontAwesomeIcon icon={faLaptop} size="3x" />
-                                    count={this.state.FacebookSales.toString()}
+                                    count={fbSales.toString()}
                                     headerText="Ventas Facebook"
                                     footerText="Ver detalles"
                                     linkTo="/#/OrderManagement"
@@ -108,7 +79,7 @@ class Dashboard extends Component {
                                 <StatWidget
                                     color="success"
                                     icon=<FontAwesomeIcon icon={faMobileAlt} size="3x" />
-                                    count={this.state.InstagramSales.toString()}
+                                    count={igSales.toString()}
                                     headerText="Ventas Instagram"
                                     footerText="Ver detalles"
                                     linkTo="/#/OrderManagement"
@@ -117,7 +88,7 @@ class Dashboard extends Component {
                                 <StatWidget
                                     color="warning"
                                     icon=<FontAwesomeIcon icon={faArchive} size="3x" />
-                                    count={"$"+this.numberWithDots(this.state.Revenue.box_money)}
+                                    count={"$"+NumberWithDots(revenue.Currency)}
                                     headerText="Dinero en caja"
                                     footerText="Ver detalles"
                                     linkTo="/#/OrderManagement"
@@ -138,9 +109,9 @@ class Dashboard extends Component {
                                         inverted=""
                                         color="timeline-badge success"
                                         icon="fa fa-check"
-                                        title={this.state.mostSoldItem.description}
-                                        source={"Vendido "+this.state.mostSoldItem.timesSold +" veces"}
-                                        body={"El producto "+this.state.mostSoldItem.description+" (id "+this.state.mostSoldItem.id+") es el más popular, habiéndose vendido "+ this.state.mostSoldItem.timesSold+ " veces."}
+                                        title={mostSoldItem.Description}
+                                        source={"Vendido "+mostSoldItem.Times +" veces"}
+                                        body={"El producto "+mostSoldItem.Description+" (id "+mostSoldItem.Id+") es el más popular, habiéndose vendido "+ mostSoldItem.Times+ " veces."}
                                     />
                                 </div>
                             </Card>
