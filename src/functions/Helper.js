@@ -17,7 +17,8 @@ export function FormatDate(d) {
     var monthIndex = date.getMonth();
     var year = date.getFullYear();
 
-    return day + ' de ' + monthNames[monthIndex] + ' de ' + year;
+    // return day + ' de ' + monthNames[monthIndex] + ' de ' + year;
+    return day + '/' + monthIndex + '/' + year;
 }
 
 export function FormatDateTime(d) {
@@ -40,6 +41,6 @@ export function FormatDateTime(d) {
     return day + ' de ' + monthNames[monthIndex] + ' de ' + year + ', ' + hours + ':' + (minutes < 10 ? '0'+minutes : minutes) + ' hrs.';
 }
 
-export function FormatDiscount(x, d){ 
+export function FormatDiscount(x, d){
     return "$"+NumberWithDots(Math.round(x*(1-d/100)))
 }

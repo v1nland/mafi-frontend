@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
-import { Grid, Row, Col, Tab, Tabs, Modal, Table, Form, Button } from 'react-bootstrap';
+import { Grid, Row, Col, Tab, Tabs, Modal, Table, Form, Button, ButtonGroup } from 'react-bootstrap';
 import { MDBDataTable } from 'mdbreact';
+import DataTable, { defaultThemes }  from 'react-data-table-component';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLaptop, faMobileAlt, faCheckCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -92,101 +93,103 @@ class OrderManagement extends Component {
 
     RefreshOrders(){
         FetchOrders()
-        .then(res => {
-            this.setState({ orders: res.Data, fetchDone: true }, () => {
-                for (var i = 0; i < this.state.orders.length; i++) {
-                    var current_id = this.state.orders[i]['ID']
-                    var current_value = this.state.orders[i]['finished']
+        .then(response => {
+            for (var i = 0; i < response.Data.length; i++) {
+                var current_id = response.Data[i]['ID']
+                var current_value = response.Data[i]['finished']
 
-                    this.state.orders[i]['precio'] = '$'+NumberWithDots( this.state.orders[i]['item']['sell_price'] )
-                    this.state.orders[i]['date'] = FormatDate( this.state.orders[i]['date'] )
-                    this.state.orders[i]['contact'] = '+569 '+this.state.orders[i]['contact']
-                    this.state.orders[i]['source'] = (this.state.orders[i]['source'] == 'F') ? <FontAwesomeIcon icon={faLaptop} /> : <FontAwesomeIcon icon={faMobileAlt} />
-                    this.state.orders[i]['finished'] = <Button size="sm" id={current_id} cvalue={current_value} onClick={this.HandleSwapOrderState}> { this.state.orders[i]['finished'] ? <FontAwesomeIcon icon={faCheckCircle} /> : <FontAwesomeIcon icon={faTimes} /> } </Button>
-                    this.state.orders[i]['acciones'] = <Button size="sm" variant="danger" id={current_id} onClick={this.HandleEditModalData}><FontAwesomeIcon icon={faTrash} /></Button>
-                }
-            });
+                response.Data[i]['precio'] = '$'+NumberWithDots( response.Data[i]['item']['sell_price'] )
+                response.Data[i]['date'] = FormatDate( response.Data[i]['date'] )
+                response.Data[i]['contact'] = '+569 '+response.Data[i]['contact']
+                response.Data[i]['source'] = (response.Data[i]['source'] == 'F') ? <FontAwesomeIcon icon={faLaptop} /> : <FontAwesomeIcon icon={faMobileAlt} />
+                // response.Data[i]['finished'] =
+                response.Data[i]['acciones'] = <ButtonGroup aria-label="Basic example"><Button size="sm" id={current_id} cvalue={current_value} onClick={this.HandleSwapOrderState}> { response.Data[i]['finished'] ? <FontAwesomeIcon icon={faCheckCircle} /> : <FontAwesomeIcon icon={faTimes} /> } </Button> <Button size="sm" variant="danger" id={current_id} onClick={this.HandleEditModalData}><FontAwesomeIcon icon={faTrash} /></Button></ButtonGroup>
+            }
+
+            return response
+        })
+        .then(res => {
+            this.setState({ orders: res.Data, fetchDone: true }, () => console.log(res) );
         })
     }
 
     renderItem = ({ID, description} ) => <option key={ID} value={ID}> { description } </option>
 
     render() {
-        const { items, item } = this.state;
-        const { orders, order } = this.state;
+        const { items } = this.state;
+        const { orders } = this.state;
         const { showOrderStateSwapModal } = this.state;
 
-        const data = {
-            columns: [
-                {
-                    label: '#',
-                    field: 'ID',
-                    sort: 'desc',
-                    width: 150
-                },
-                {
-                    label: 'Comprador',
-                    field: 'buyer',
-                    sort: 'desc',
-                    width: 150
-                },
-                {
-                    label: 'Producto',
-                    field: 'description',
-                    sort: 'desc',
-                    width: 200
-                },
-                {
-                    label: 'Fecha',
-                    field: 'date',
-                    sort: 'desc',
-                    width: 100
-                },
-                {
-                    label: 'Contacto',
-                    field: 'contact',
-                    sort: 'desc',
-                    width: 270
-                },
-                {
-                    label: 'Precio',
-                    field: 'precio',
-                    sort: 'desc',
-                    width: 150
-                },
-                {
-                    label: 'Fuente',
-                    field: 'source',
-                    sort: 'desc',
-                    width: 150
-                },
-                {
-                    label: 'Ubicación',
-                    field: 'location',
-                    sort: 'desc',
-                    width: 150
-                },
-                {
-                    label: 'Hora',
-                    field: 'hour',
-                    sort: 'desc',
-                    width: 150
-                },
-                {
-                    label: 'Estado',
-                    field: 'finished',
-                    sort: 'desc',
-                    width: 150
-                },
-                {
-                    label: '',
-                    field: 'acciones',
-                    sort: 'asc',
-                    width: 50
-                }
-            ],
-            rows: orders
-        };
+        const paginationOptions = { rowsPerPageText: 'Filas por página', rangeSeparatorText: 'de' };
+
+        const columns = [
+            {
+                name: '#',
+                selector: 'ID',
+                sortable: true,
+                center: true,
+                width: '60px'
+            },
+            {
+                name: 'Comprador',
+                selector: 'buyer',
+                sortable: true,
+                center: true
+            },
+            {
+                name: 'Producto',
+                selector: 'description',
+                sortable: true,
+                center: true
+            },
+            {
+                name: 'Fecha',
+                selector: 'date',
+                sortable: true,
+                center: true,
+                width: '100px'
+            },
+            {
+                name: 'Precio',
+                selector: 'precio',
+                sortable: true,
+                center: true,
+                width: '90px'
+            },
+            {
+                name: 'RRSS',
+                selector: 'source',
+                sortable: true,
+                center: true,
+                width: '70px'
+            },
+            {
+                name: 'Acciones',
+                selector: 'acciones',
+                sortable: true,
+                center: true,
+                width: '100px'
+            }
+        ];
+
+        const SampleExpandedComponent = ({ data }) => (
+          <div className="expanded-row">
+            <ol className="ol-triangle">
+                <li className="li-triangle">
+                    Precio a pagar: {data.precio}
+                </li>
+                <li className="li-triangle">
+                    Producto a entregar: {data.description}
+                </li>
+                <li className="li-triangle">
+                    Número de contacto: {data.contact}
+                </li>
+                <li className="li-triangle">
+                    {data.location} a las {data.hour}hrs.
+                </li>
+            </ol>
+          </div>
+        );
 
         return (
             (this.state.fetchDone === false) ? (
@@ -198,10 +201,15 @@ class OrderManagement extends Component {
 
                     <Tabs defaultActiveKey={1} id="uncontrolled-tab">
                         <Tab eventKey={1} title="Ver pedidos">
-                            <MDBDataTable
-                                striped
-                                bordered
-                                data={data}
+                            <DataTable
+                                title="Listado de pedidos"
+                                columns={columns}
+                                data={orders}
+                                paginationComponentOptions={paginationOptions}
+                                expandableRowsComponent={<SampleExpandedComponent />}
+                                expandableRows
+                                highlightOnHover
+                                pagination
                             />
                         </Tab>
 

@@ -21,6 +21,7 @@
     "react-bootstrap": "^1.0.0-beta.16",
     "react-bs-notifier": "^5.0.0",
     "react-container-dimensions": "^1.4.1",
+    "react-data-table-component": "^6.2.3",
     "react-datepicker": "^2.2.0",
     "react-dom": "^16.8.6",
     "react-fontawesome": "^1.6.1",
@@ -29,6 +30,7 @@
     "react-smooth": "^1.0.2",
     "recharts-scale": "^0.4.2",
     "reduce-css-calc": "^2.1.6",
+    "styled-components": "^5.0.1",
     "typescript": "^3.6.3"
   },
   "scripts": {
