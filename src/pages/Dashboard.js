@@ -6,7 +6,8 @@ import Donut from '../components/Donut/Donut';
 import TimelineElement from '../components/Utility/TimelineElement';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendar, faLaptop, faMobileAlt, faArchive, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faArchive, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faFacebookSquare, faInstagram } from '@fortawesome/free-brands-svg-icons';
 
 import CenteredSpinner from '../components/Utility/CenteredSpinner';
 import PageTitle from '../components/Utility/PageTitle';
@@ -22,14 +23,21 @@ class Dashboard extends Component {
 
         this.state = {
             fetchDone: false,
+            orders: [],
+            fbSales: 0,
+            igSales: 0,
             revenue: {
                 Income: 0,
                 Outcome: 0,
                 Currency: 0
             },
-            fbSales: 0,
-            igSales: 0,
-            orders: [],
+            mostSoldItem: {
+                Id: 0,
+                Description: "",
+                Type: "",
+                Color: "",
+                Times: 0
+            }
         };
     }
 
@@ -69,7 +77,7 @@ class Dashboard extends Component {
 
                                 <StatWidget
                                     color="danger"
-                                    icon=<FontAwesomeIcon icon={faLaptop} size="3x" />
+                                    icon=<FontAwesomeIcon icon={faFacebookSquare} size="3x" />
                                     count={fbSales.toString()}
                                     headerText="Ventas Facebook"
                                     footerText="Ver detalles"
@@ -78,7 +86,7 @@ class Dashboard extends Component {
 
                                 <StatWidget
                                     color="success"
-                                    icon=<FontAwesomeIcon icon={faMobileAlt} size="3x" />
+                                    icon=<FontAwesomeIcon icon={faInstagram} size="3x" />
                                     count={igSales.toString()}
                                     headerText="Ventas Instagram"
                                     footerText="Ver detalles"

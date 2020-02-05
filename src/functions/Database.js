@@ -1,7 +1,7 @@
 export function APIURL(){
-    // return 'https://arq-backend.herokuapp.com'
+    return 'https://mafi-backend-go.herokuapp.com/v1'
     // return 'http://192.168.0.17:8080'
-    return 'http://localhost:8080/v1'
+    // return 'http://localhost:8080/v1'
 }
 
 export function FetchDataTablesLang(){
@@ -58,6 +58,7 @@ export function FetchOrders() {
     return fetch(FetchURL)
     .then(response => response.json())
     .then(resp => {
+        console.log(resp);
         return resp
     })
     .catch(err => {
@@ -67,7 +68,6 @@ export function FetchOrders() {
 
 export function InsertOrder( jsonData ) {
     var FetchURL = `${APIURL()}/order`;
-
     console.log(JSON.stringify(jsonData));
 
     return fetch(FetchURL, {
@@ -163,6 +163,42 @@ export function FetchItems() {
     console.log( FetchURL );
 
     return fetch(FetchURL)
+    .then(response => response.json())
+    .then(resp => {
+        return resp
+    })
+    .catch(err => {
+        return err
+    })
+}
+
+export function FetchItemsStock() {
+    var FetchURL = `${APIURL()}/item/stock`;
+    console.log( FetchURL );
+
+    return fetch(FetchURL)
+    .then(response => response.json())
+    .then(resp => {
+        return resp
+    })
+    .catch(err => {
+        return err
+    })
+}
+
+export function InsertItem( jsonData ) {
+    var FetchURL = `${APIURL()}/item`;
+    console.log(JSON.stringify(jsonData));
+
+    return fetch(FetchURL, {
+        method: 'POST',
+        mode: "cors",
+        cache: "no-cache",
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8"
+        },
+        body: JSON.stringify(jsonData)
+    })
     .then(response => response.json())
     .then(resp => {
         return resp
