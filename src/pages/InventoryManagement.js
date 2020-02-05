@@ -57,6 +57,7 @@ class InventoryManagement extends Component {
         .then(r => {
             if ( r.Status == 200 ) {
                 this.AlertsHandler.generate('success', '¡Éxito!', 'Datos enviados correctamente al sistema.');
+                this.RefreshItems()
             }else{
                 this.AlertsHandler.generate('danger', '¡Error!', 'Los datos no fueron ingresados al sistema.');
             }
@@ -72,7 +73,6 @@ class InventoryManagement extends Component {
         .then(response => {
             for (var i = 0; i < response.Data.length; i++) {
                 var current_id = response.Data[i]['id']
-                var current_value = response.Data[i]['finished']
 
                 response.Data[i]['sell_price'] = '$'+NumberWithDots( response.Data[i]['sell_price'] )
                 response.Data[i]['stock'] = response.Data[i]['times_bought']-response.Data[i]['times_sold']

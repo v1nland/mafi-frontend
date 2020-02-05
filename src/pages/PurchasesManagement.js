@@ -1,186 +1,218 @@
 import React, { Component } from 'react';
-import { Grid, Row, Col, Tab, Tabs, Modal, Table, Form, Button } from 'react-bootstrap';
+import { Grid, Row, Col, Tab, Tabs, Modal, Table, Form, Button, ButtonGroup } from 'react-bootstrap';
+import DataTable, { defaultThemes }  from 'react-data-table-component';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendar, faLaptop, faMobileAlt, faArchive } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faLaptop, faMobileAlt, faArchive, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 import CenteredSpinner from '../components/Utility/CenteredSpinner';
 import PageTitle from '../components/Utility/PageTitle';
 import AlertsHandler from '../components/Utility/AlertsHandler';
 
+import { FetchItems, FetchPurchases, InsertPurchase } from '../functions/Database'
+import { NumberWithDots, FormatDate, FormatDiscount } from '../functions/Helper'
+
 class PurchasesManagement extends Component {
     constructor(props, context) {
         super(props, context);
 
-        this.URL = "https://mafi-backend.herokuapp.com";
-
-        this.OpenModal = this.OpenModal.bind(this);
-        this.CloseModal = this.CloseModal.bind(this);
-
         this.state = {
-            FetchDone: false,
-            NewPurchaseSubmitted: false,
-            ShowModal: false,
+            fetchDone: false,
             purchases: [],
-            purchase: {
-                id: '',
-                date: '',
-                item_id: 0,
-                item_qty: 0,
-                description: '',
-                unit_price: 0
-            },
-            items: [],
-            item: {
-                id: '',
-                description: '',
-                times_bought: 0,
-                times_sold: 0,
-                type: '',
-                color: '',
-                price: 0
-            }
+            items: []
         };
     }
 
-    SubmitNewPurchase = (event) => {
+    HandleSubmitNewPurchase = (event) => {
         event.preventDefault();
+        const et = event.target;
 
-        var date = event.target[0].value;
-        var item_id = event.target[1].value;
-        var item_qty = event.target[2].value;
-        var description = event.target[3].value;
-
-        if ( date == '' || item_id == '' || item_qty == '' || description == '') {
-            this.setState({ NewPurchaseSubmitted: false });
-            this.OpenModal();
-        }else{
-            fetch(this.URL+`/purchases/add?date=${date}&item_id=${item_id}&item_qty=${item_qty}&description=${description}`)
-            .then(this.GetPurchases)
-            .catch(err => console.error(err))
-
-            this.setState({ NewPurchaseSubmitted: true });
-            this.OpenModal();
+        for (var i = 0; i < et.length - 1; i++) {
+            if (et[i].value == ''){
+                this.AlertsHandler.generate('danger', '¡Error!', 'Faltan datos por ingresar.');
+                return
+            }
         }
+
+        let jsonData = {
+            "date": et[0].value,
+            "item_id": parseInt(et[1].value, 10),
+            "item_qty": parseInt(et[2].value, 10),
+            "description": et[3].value
+        }
+
+        InsertPurchase( jsonData )
+        .then(r => {
+            if ( r.Status == 200 ) {
+                this.AlertsHandler.generate('success', '¡Éxito!', 'Datos enviados correctamente al sistema.');
+                this.RefreshPurchases()
+            }else{
+                this.AlertsHandler.generate('danger', '¡Error!', 'Los datos no fueron ingresados al sistema.');
+            }
+        })
     }
 
-    CloseModal() {
-        this.setState({ ShowModal: false });
-    }
-
-    OpenModal() {
-        this.setState({ ShowModal: true });
-    }
-
-    // Database stuff
     componentDidMount(){
-        this.GetPurchases();
-        this.GetItems();
+        this.RefreshPurchases()
+        this.RefreshItems()
     }
 
-    GetPurchases = _ => {
-        fetch(this.URL+`/purchases`)
-        .then(response => response.json())
-        .then(resp => this.setState({ purchases: resp.data, FetchDone: true }))
-        .catch(err => console.error(err))
+    RefreshPurchases(){
+        FetchPurchases()
+        .then(response => {
+            for (var i = 0; i < response.Data.length; i++) {
+                var current_id = response.Data[i]['ID']
+
+                response.Data[i]['final_price'] = "$"+NumberWithDots(response.Data[i]['item']['purchase_price']*response.Data[i]['item_qty'])
+                response.Data[i]['date'] = FormatDate( response.Data[i]['date'] )
+                response.Data[i]['producto'] = response.Data[i]['item']['description']
+                response.Data[i]['acciones'] = <ButtonGroup> <Button size="sm" variant="danger" id={current_id} onClick={this.HandleEditModalData}><FontAwesomeIcon icon={faTrash} /> </Button> </ButtonGroup>
+            }
+
+            return response
+        })
+        .then(res => {
+            this.setState({ purchases: res.Data, fetchDone: true }, () => console.log(res) );
+        })
     }
 
-    GetItems = _ => {
-        fetch(this.URL+`/items`)
-        .then(response => response.json())
-        .then(resp => this.setState({ items: resp.data }))
-        .catch(err => console.error(err))
+    RefreshItems(){
+        FetchItems()
+        .then(res => {
+            this.setState({ items: res.Data }, () => console.log(res) )
+        })
     }
 
-    NumberWithDots = (x) => { return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
-
-    RenderItems = ({id, description, times_bought, times_sold, type, color, sell_price} ) => <option key={id} value={id}> { description } </option>
-    RenderPurchases = ({id, date, description, item_qty, unit_price } ) => <tr key={id}><td>{ id }</td><td>{ date }</td><td>{ description }</td><td>{ item_qty }</td><td>{ "$"+this.NumberWithDots(unit_price*item_qty) }</td></tr>
+    renderItem = ({ID, description} ) => <option key={ID} value={ID}> { description } </option>
 
     render() {
-        const { purchases, purchase } = this.state;
-        const { items, item } = this.state;
+        const { purchases } = this.state;
+        const { items } = this.state;
+
+        const paginationOptions = { rowsPerPageText: 'Filas por página', rangeSeparatorText: 'de' };
+
+        const columns = [
+            {
+                name: '#',
+                selector: 'ID',
+                sortable: true,
+                center: true,
+                width: '60px'
+            },
+            {
+                name: 'Fecha',
+                selector: 'date',
+                center: true,
+                width: '100px'
+            },
+            {
+                name: 'Producto',
+                selector: 'producto',
+                center: true
+            },
+            {
+                name: 'Cantidad',
+                selector: 'item_qty',
+                center: true,
+                width: '150px'
+            },
+            {
+                name: 'Precio final',
+                selector: 'final_price',
+                center: true,
+                width: '100px'
+            },
+            {
+                name: 'Acciones',
+                selector: 'acciones',
+                center: true,
+                width: '100px'
+            }
+        ];
+
+        const ExpandedComponent = ({ data }) => (
+          <div className="expanded-row">
+            <ol className="ol-triangle">
+                <li className="li-triangle">
+                    Este producto se vende por ${NumberWithDots(data.item.sell_price)} la unidad.
+                </li>
+                <li className="li-triangle">
+                    Descripción: {data.description}
+                </li>
+            </ol>
+          </div>
+        );
 
         return (
-            !(purchases.length || items.length) ? (
+            (this.state.fetchDone === false) ? (
                 <CenteredSpinner />
             ) : (
                 <div>
+                    <AlertsHandler onRef={ref => (this.AlertsHandler = ref)} />
                     <PageTitle text="Gestión de compras" />
 
-                    <Tabs defaultActiveKey={1} id="uncontrolled-tab" animation={false}>
-                        <Tab eventKey={1} title="Ver compras realizadas">
-                            <Table responsive size="sm">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">ID</th>
-                                        <th scope="col">Fecha</th>
-                                        <th scope="col">Producto comprado</th>
-                                        <th scope="col">Cantidad comprada</th>
-                                        <th scope="col">Precio total</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {
-                                        purchases.map(this.RenderPurchases)
-                                    }
-                                </tbody>
-                            </Table>
+                    <Tabs defaultActiveKey={1} id="uncontrolled-tab">
+                        <Tab eventKey={1} title="Ver compras">
+                            <DataTable
+                                title="Lista de compras"
+                                columns={columns}
+                                data={purchases}
+                                expandableRowsComponent={<ExpandedComponent />}
+                                expandableRows
+                                highlightOnHover
+                                pagination
+                                paginationComponentOptions={paginationOptions}
+                            />
                         </Tab>
 
-                        <Tab eventKey={2} title="Agregar compras">
-                                <Form onSubmit={this.SubmitNewPurchase}>
-                                    <Form.Row>
-                                        <Form.Group as={Col}>
-                                            <Form.Label>Fecha de la compra</Form.Label>
-                                            <Form.Control as="input" placeholder="25/01/1998" id="date" name="date" type="text" />
-                                        </Form.Group>
+                        <Tab eventKey={2} title="Agregar compras" className="form-tab">
+                            <Form onSubmit={this.HandleSubmitNewPurchase}>
+                                <Form.Row className="label-row">
+                                    <Form.Group as={Col}>
+                                        <Form.Label>Fecha de la compra</Form.Label>
+                                    </Form.Group>
 
-                                        <Form.Group as={Col}>
-                                            <Form.Label>Selecciona el artículo que se compró</Form.Label>
+                                    <Form.Group as={Col}>
+                                        <Form.Label>Selecciona el artículo comprado</Form.Label>
+                                    </Form.Group>
+                                </Form.Row>
 
-                                            <Form.Control as="select" id="item_id" name="item_id">
-                                                { items.map(this.RenderItems) }
-                                            </Form.Control>
-                                        </Form.Group>
-                                    </Form.Row>
+                                <Form.Row>
+                                    <Form.Group as={Col}>
+                                        <Form.Control as="input" placeholder="25/01/1998" id="date" name="date" type="date" />
+                                    </Form.Group>
 
-                                    <Form.Row>
-                                        <Form.Group as={Col}>
-                                            <Form.Label>Ingresa la cantidad que se compró</Form.Label>
-                                            <Form.Control as="input" placeholder="4" id="item_qty" name="item_qty" type="text" />
-                                        </Form.Group>
+                                    <Form.Group as={Col}>
+                                        <Form.Control as="select" id="item_id" name="item_id">
+                                            { items.map(this.renderItem) }
+                                        </Form.Control>
+                                    </Form.Group>
+                                </Form.Row>
 
-                                        <Form.Group as={Col}>
-                                            <Form.Label>Descripción de la compra</Form.Label>
-                                            <Form.Control as="input" placeholder="Compra de tres pañaleras" id="description" name="description" type="text" />
-                                        </Form.Group>
-                                    </Form.Row>
+                                <Form.Row className="label-row">
+                                    <Form.Group as={Col}>
+                                        <Form.Label>Ingresa la cantidad</Form.Label>
+                                    </Form.Group>
 
-                                    <Button type="submit">Enviar datos</Button>
-                                </Form>
+                                    <Form.Group as={Col}>
+                                        <Form.Label>Descripción de la compra</Form.Label>
+                                    </Form.Group>
+                                </Form.Row>
+
+                                <Form.Row>
+                                    <Form.Group as={Col}>
+                                        <Form.Control as="input" placeholder="4" id="item_qty" name="item_qty" type="text" />
+                                    </Form.Group>
+
+                                    <Form.Group as={Col}>
+                                        <Form.Control as="input" placeholder="Compra de tres pañaleras en el local XXXXX." id="description" name="description" type="text" />
+                                    </Form.Group>
+                                </Form.Row>
+
+                                <center><Button type="submit">Enviar datos</Button></center>
+                            </Form>
                         </Tab>
                     </Tabs>
-
-                    <Modal show={this.state.ShowModal} onHide={this.CloseModal} animation={true}>
-                        <Modal.Header>
-                            <Modal.Title>Acerca de la compra</Modal.Title>
-                        </Modal.Header>
-
-                        <Modal.Body>
-                                {
-                                    (!this.state.NewPurchaseSubmitted)?
-                                        <p>Faltan datos por ingresar.</p>
-                                        :
-                                        <p>¡Enviado!</p>
-                                }
-                        </Modal.Body>
-
-                        <Modal.Footer>
-                            <Button onClick={this.CloseModal}>Cerrar</Button>
-                        </Modal.Footer>
-                    </Modal>
 
                     <br />
                 </div>

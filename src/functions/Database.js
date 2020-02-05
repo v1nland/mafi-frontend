@@ -207,3 +207,42 @@ export function InsertItem( jsonData ) {
         return err
     })
 }
+
+/////////////////// BEGIN /////////////////////////
+/////////////////// PURCHASES   ///////////////////
+/////////////////// PURCHASES   ///////////////////
+export function FetchPurchases() {
+    var FetchURL = `${APIURL()}/purchase`;
+    console.log( FetchURL );
+
+    return fetch(FetchURL)
+    .then(response => response.json())
+    .then(resp => {
+        return resp
+    })
+    .catch(err => {
+        return err
+    })
+}
+
+export function InsertPurchase( jsonData ) {
+    var FetchURL = `${APIURL()}/purchase`;
+    console.log(JSON.stringify(jsonData));
+
+    return fetch(FetchURL, {
+        method: 'POST',
+        mode: "cors",
+        cache: "no-cache",
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8"
+        },
+        body: JSON.stringify(jsonData)
+    })
+    .then(response => response.json())
+    .then(resp => {
+        return resp
+    })
+    .catch(err => {
+        return err
+    })
+}

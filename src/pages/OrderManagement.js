@@ -59,6 +59,7 @@ class OrderManagement extends Component {
         .then(r => {
             if ( r.Status == 200 ) {
                 this.AlertsHandler.generate('success', '¡Éxito!', 'Datos enviados correctamente al sistema.');
+                this.RefreshOrders()
             }else{
                 this.AlertsHandler.generate('danger', '¡Error!', 'Los datos no fueron ingresados al sistema.');
             }
@@ -104,7 +105,7 @@ class OrderManagement extends Component {
                 var current_id = response.Data[i]['ID']
                 var current_value = response.Data[i]['finished']
 
-                response.Data[i]['precio'] = '$'+NumberWithDots( response.Data[i]['item']['sell_price'] )
+                response.Data[i]['precio'] = FormatDiscount(response.Data[i]['item']['sell_price'], response.Data[i]['discount'])
                 response.Data[i]['item_description'] = response.Data[i]['item']['description']
                 response.Data[i]['date'] = FormatDate( response.Data[i]['date'] )
                 response.Data[i]['contact'] = (response.Data[i]['contact'] ? '+569 '+response.Data[i]['contact'] : 'N/A')
@@ -208,7 +209,7 @@ class OrderManagement extends Component {
                     Número de contacto: {data.contact}
                 </li>
                 <li className="li-triangle">
-                    {data.location} a las {data.hour}hrs.
+                    <b>{data.location}</b> a las {data.hour}hrs.
                 </li>
                 <li className="li-triangle">
                     Descripción: {data.description}
