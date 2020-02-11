@@ -10,24 +10,30 @@ import CenteredSpinner from '../components/Utility/CenteredSpinner';
 import PageTitle from '../components/Utility/PageTitle';
 import AlertsHandler from '../components/Utility/AlertsHandler';
 
-import { FetchItems, FetchOrders, InsertOrder, UpdateOrderState } from '../functions/Database'
+import { FetchItems, FetchOrders, InsertOrder, UpdateOrderState, DeleteOrder } from '../functions/Database'
 import { NumberWithDots, FormatDate, FormatDiscount } from '../functions/Helper'
 
 class OrderManagement extends Component {
     constructor(props, context) {
         super(props, context);
 
-        this.HandleSwapOrderState = this.HandleSwapOrderState.bind(this);
-        this.CloseSwapStateModal = this.CloseSwapStateModal.bind(this);
+        this.CloseModal = this.CloseModal.bind(this);
         this.SwapOrderState = this.SwapOrderState.bind(this);
+        this.HandleSwapOrderState = this.HandleSwapOrderState.bind(this);
+
+        this.DeleteCurrentOrder = this.DeleteCurrentOrder.bind(this);
+        this.HandleDeleteOrder = this.HandleDeleteOrder.bind(this);
 
         this.state = {
             fetchDone: false,
             idEdit: 0,
             submitted: false,
-            showOrderStateSwapModal: false,
+            showModal: false,
             items: [],
             orders: [],
+            modalTitle: '',
+            modalBody: '',
+            modalFooter: '',
         };
     }
 
@@ -66,15 +72,15 @@ class OrderManagement extends Component {
         })
     }
 
-    CloseSwapStateModal() {
-        this.setState({ showOrderStateSwapModal: false });
+    CloseModal() {
+        this.setState({ showModal: false });
     }
 
     HandleSwapOrderState( e ) {
         var idEdit = e.currentTarget.id;
-        var currentValue = e.currentTarget.attributes[1].value
+        var currentValue = e.currentTarget.attributes[1].value;
 
-        this.setState({ showOrderStateSwapModal: true });
+        this.setState({ modalTitle: 'Cambio de estado del pedido', modalBody: '¿Quieres cambiar el estado del pedido?', modalFooter: (<div><Button className="btn btn-primary" onClick={this.SwapOrderState}>Cambiar</Button> <Button className="btn btn-secondary" onClick={this.CloseModal}>Cerrar</Button></div>), showModal: true });
         this.setState({ idEdit: idEdit, currentValue: currentValue });
     }
 
@@ -90,7 +96,29 @@ class OrderManagement extends Component {
         })
         .catch(err => console.error(err))
 
-        this.setState({ showOrderStateSwapModal: false });
+        this.setState({ showModal: false });
+    }
+
+    HandleDeleteOrder( e ) {
+        var idEdit = e.currentTarget.id;
+
+        this.setState({ modalTitle: 'Eliminar pedido', modalBody: '¿Estás seguro que quieres eliminar el pedido?', modalFooter: (<div><Button className="btn btn-danger" onClick={this.DeleteCurrentOrder}>Eliminar</Button> <Button className="btn btn-secondary" onClick={this.CloseModal}>Cerrar</Button></div>), showModal: true });
+        this.setState({ idEdit: idEdit });
+    }
+
+    DeleteCurrentOrder(){
+        DeleteOrder( this.state.idEdit )
+        .then( r => {
+            this.RefreshOrders()
+            if ( r.Status == 200 ) {
+                this.AlertsHandler.generate('success', '¡Éxito!', 'Datos eliminados correctamente del sistema.');
+            }else{
+                this.AlertsHandler.generate('danger', '¡Error!', 'Los datos no fueron eliminados del sistema.');
+            }
+        })
+        .catch(err => console.error(err))
+
+        this.setState({ showModal: false });
     }
 
     componentDidMount(){
@@ -110,7 +138,7 @@ class OrderManagement extends Component {
                 response.Data[i]['date'] = FormatDate( response.Data[i]['date'] )
                 response.Data[i]['contact'] = (response.Data[i]['contact'] ? '+569 '+response.Data[i]['contact'] : 'N/A')
                 response.Data[i]['source'] = (response.Data[i]['source'] == 'F') ? <FontAwesomeIcon icon={faFacebookSquare} size="2x"/> : <FontAwesomeIcon icon={faInstagram} size="2x"/>
-                response.Data[i]['acciones'] = <ButtonGroup><Button size="sm" id={current_id} cvalue={current_value} onClick={this.HandleSwapOrderState}> { response.Data[i]['finished'] ? <FontAwesomeIcon icon={faCheckCircle} /> : <FontAwesomeIcon icon={faTimes} /> } </Button> <Button size="sm" variant="danger" id={current_id} onClick={this.HandleEditModalData}><FontAwesomeIcon icon={faTrash} /></Button></ButtonGroup>
+                response.Data[i]['acciones'] = <ButtonGroup><Button size="sm" id={current_id} cvalue={current_value} onClick={this.HandleSwapOrderState}> { response.Data[i]['finished'] ? <FontAwesomeIcon icon={faCheckCircle} /> : <FontAwesomeIcon icon={faTimes} /> } </Button> <Button size="sm" variant="danger" id={current_id} onClick={this.HandleDeleteOrder}><FontAwesomeIcon icon={faTrash} /></Button></ButtonGroup>
             }
 
             return response
@@ -125,7 +153,7 @@ class OrderManagement extends Component {
     render() {
         const { items } = this.state;
         const { orders } = this.state;
-        const { showOrderStateSwapModal } = this.state;
+        const { showModal, modalTitle, modalBody, modalFooter } = this.state;
 
         const paginationOptions = { rowsPerPageText: 'Filas por página', rangeSeparatorText: 'de' };
 
@@ -403,13 +431,10 @@ class OrderManagement extends Component {
                         </Tab>
                     </Tabs>
 
-                    <Modal show={ showOrderStateSwapModal } animation={true}>
-                        <Modal.Header><Modal.Title>Cambio de estado del pedido</Modal.Title></Modal.Header>
-                        <Modal.Body>¿Quieres cambiar el estado del pedido?</Modal.Body>
-                        <Modal.Footer>
-                            <Button className="btn btn-primary" onClick={this.SwapOrderState}>Cambiar</Button>
-                            <Button className="btn btn-secondary" onClick={this.CloseSwapStateModal}>Cerrar</Button>
-                        </Modal.Footer>
+                    <Modal show={ showModal } animation={true}>
+                        <Modal.Header><Modal.Title>{ modalTitle }</Modal.Title></Modal.Header>
+                        <Modal.Body>{ modalBody }</Modal.Body>
+                        <Modal.Footer>{ modalFooter }</Modal.Footer>
                     </Modal>
 
                     <br />

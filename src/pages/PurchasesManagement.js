@@ -9,17 +9,25 @@ import CenteredSpinner from '../components/Utility/CenteredSpinner';
 import PageTitle from '../components/Utility/PageTitle';
 import AlertsHandler from '../components/Utility/AlertsHandler';
 
-import { FetchItems, FetchPurchases, InsertPurchase } from '../functions/Database'
+import { FetchItems, FetchPurchases, InsertPurchase, DeletePurchase } from '../functions/Database'
 import { NumberWithDots, FormatDate, FormatDiscount } from '../functions/Helper'
 
 class PurchasesManagement extends Component {
     constructor(props, context) {
         super(props, context);
 
+        this.CloseModal = this.CloseModal.bind(this);
+        this.DeleteCurrentPurchase = this.DeleteCurrentPurchase.bind(this);
+        this.HandleDeletePurchase = this.HandleDeletePurchase.bind(this);
+
         this.state = {
             fetchDone: false,
             purchases: [],
-            items: []
+            items: [],
+            showModal: false,
+            modalTitle: '',
+            modalBody: '',
+            modalFooter: '',
         };
     }
 
@@ -52,6 +60,10 @@ class PurchasesManagement extends Component {
         })
     }
 
+    CloseModal() {
+        this.setState({ showModal: false });
+    }
+
     componentDidMount(){
         this.RefreshPurchases()
         this.RefreshItems()
@@ -66,7 +78,7 @@ class PurchasesManagement extends Component {
                 response.Data[i]['final_price'] = "$"+NumberWithDots(response.Data[i]['item']['purchase_price']*response.Data[i]['item_qty'])
                 response.Data[i]['date'] = FormatDate( response.Data[i]['date'] )
                 response.Data[i]['producto'] = response.Data[i]['item']['description']
-                response.Data[i]['acciones'] = <ButtonGroup> <Button size="sm" variant="danger" id={current_id} onClick={this.HandleEditModalData}><FontAwesomeIcon icon={faTrash} /> </Button> </ButtonGroup>
+                response.Data[i]['acciones'] = <ButtonGroup> <Button size="sm" variant="danger" id={current_id} onClick={this.HandleDeletePurchase}><FontAwesomeIcon icon={faTrash} /> </Button> </ButtonGroup>
             }
 
             return response
@@ -83,11 +95,34 @@ class PurchasesManagement extends Component {
         })
     }
 
+    HandleDeletePurchase( e ) {
+        var idEdit = e.currentTarget.id;
+
+        this.setState({ modalTitle: 'Eliminar compra', modalBody: '¿Estás seguro que quieres eliminar la compra?', modalFooter: (<div><Button className="btn btn-danger" onClick={this.DeleteCurrentPurchase}>Eliminar</Button> <Button className="btn btn-secondary" onClick={this.CloseModal}>Cerrar</Button></div>), showModal: true });
+        this.setState({ idEdit: idEdit });
+    }
+
+    DeleteCurrentPurchase(){
+        DeletePurchase( this.state.idEdit )
+        .then( r => {
+            this.RefreshPurchases()
+            if ( r.Status == 200 ) {
+                this.AlertsHandler.generate('success', '¡Éxito!', 'Datos eliminados correctamente del sistema.');
+            }else{
+                this.AlertsHandler.generate('danger', '¡Error!', 'Los datos no fueron eliminados del sistema.');
+            }
+        })
+        .catch(err => console.error(err))
+
+        this.setState({ showModal: false });
+    }
+
     renderItem = ({ID, description} ) => <option key={ID} value={ID}> { description } </option>
 
     render() {
         const { purchases } = this.state;
         const { items } = this.state;
+        const { showModal, modalTitle, modalBody, modalFooter } = this.state;
 
         const paginationOptions = { rowsPerPageText: 'Filas por página', rangeSeparatorText: 'de' };
 
@@ -213,6 +248,12 @@ class PurchasesManagement extends Component {
                             </Form>
                         </Tab>
                     </Tabs>
+
+                    <Modal show={ showModal } animation={true}>
+                        <Modal.Header><Modal.Title>{ modalTitle }</Modal.Title></Modal.Header>
+                        <Modal.Body>{ modalBody }</Modal.Body>
+                        <Modal.Footer>{ modalFooter }</Modal.Footer>
+                    </Modal>
 
                     <br />
                 </div>

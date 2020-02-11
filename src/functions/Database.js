@@ -110,6 +110,26 @@ export function UpdateOrderState( id, currentValue ) {
     })
 }
 
+export function DeleteOrder( id ) {
+    var FetchURL = `${APIURL()}/order/${id}`;
+
+    return fetch(FetchURL, {
+        method: 'DELETE',
+        mode: "cors",
+        cache: "no-cache",
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8"
+        }
+    })
+    .then(response => response.json())
+    .then(resp => {
+        return resp
+    })
+    .catch(err => {
+        return err
+    })
+}
+
 /////////////////// BEGIN /////////////////////////
 /////////////////// STATS       ///////////////////
 /////////////////// STATS       ///////////////////
@@ -237,6 +257,26 @@ export function InsertPurchase( jsonData ) {
           "Content-Type": "text/plain; charset=utf-8"
         },
         body: JSON.stringify(jsonData)
+    })
+    .then(response => response.json())
+    .then(resp => {
+        return resp
+    })
+    .catch(err => {
+        return err
+    })
+}
+
+export function DeletePurchase( id ) {
+    var FetchURL = `${APIURL()}/purchase/${id}`;
+
+    return fetch(FetchURL, {
+        method: 'DELETE',
+        mode: "cors",
+        cache: "no-cache",
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8"
+        }
     })
     .then(response => response.json())
     .then(resp => {
